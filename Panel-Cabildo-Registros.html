@@ -2864,9 +2864,9 @@ function dibujarQR(ctx, texto, x, y, tam){
 function dibujarConstancia(rec, url){
   const W = 800, M = 40, AZUL = '#1e4a7a', VERDE = '#7fbc4d', MUTED = '#5a6d7e', TEXTO = '#1a2e3a';
   const FUENTE = '16px system-ui, Arial';
-  const QR_TAM = 300;   // QR de texto (sin internet): más módulos, necesita más tamaño para leerse bien
-  const LINK_TAM = 170; // QR de enlace (con internet): se abre directo en el navegador
-  const filaH = 36, encabH = 120, infoH = 150, tituloTabla = 80, encabTabla = 34, qrT = QR_TAM + 36 + LINK_TAM + 20, pieH = 110;
+  const QR_TAM = 240;   // QR de texto (sin internet): más módulos, necesita más tamaño para leerse bien
+  const LINK_TAM = 120; // QR de enlace (con internet): se abre directo en el navegador
+  const filaH = 36, encabH = 120, infoH = 150, tituloTabla = 80, encabTabla = 34, qrT = 320, pieH = 40;
   const H = encabH + infoH + tituloTabla + encabTabla + rec.personas.length * filaH + 30 + qrT + pieH + 20;
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const c = cv.getContext('2d');
@@ -2936,13 +2936,13 @@ function dibujarConstancia(rec, url){
   });
   txt(t('c.pdf.code') + ' ' + formatCodigo(rec.codigo), M, ty + 6, '700 16px ui-monospace, Consolas, monospace', AZUL);
 
-  // QR de enlace (con internet), debajo del de texto
-  const y2 = y + QR_TAM + 36;
+  // QR de enlace (con internet), abajo a la izquierda, junto a los textos
+  const y2 = y + 190, xl = M + LINK_TAM + 20, anchoL = qrX - 20 - xl;
   dibujarQR(c, url, M, y2, LINK_TAM);
   let ly = y2 + 14;
-  etiqueta(t('c.pdf.qrWeb'), M + LINK_TAM + 20, ly);
+  etiqueta(t('c.pdf.qrWeb'), xl, ly);
   ly += 24;
-  wrap(t('c.pdf.qrWebTxt'), W - 2 * M - LINK_TAM - 20, '15px system-ui, Arial').forEach(linea => { txt(linea, M + LINK_TAM + 20, ly, '15px system-ui, Arial', TEXTO); ly += 22; });
+  wrap(t('c.pdf.qrWebTxt'), anchoL, '15px system-ui, Arial').forEach(linea => { txt(linea, xl, ly, '15px system-ui, Arial', TEXTO); ly += 22; });
 
   // Banda inferior
   c.fillStyle = VERDE; c.fillRect(0, H - 12, W, 12);
