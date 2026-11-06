@@ -3071,9 +3071,23 @@ Object.assign(T.de, {
    Con CONFIG.supabaseUrl y CONFIG.supabaseKey vacíos, todo se guarda solo en este navegador.
    ============================================================ */
 const LOCAL_KEY = 'registros-demo';
-const COLS_LISTA = 'folio,creado,tipo,contacto,titular,personas_n,fecha_ingreso,estado,codigo,constancia_at,pago_verificado,condiciones_verificadas,notas';
+const COLS_LISTA = 'folio,creado,tipo,contacto,titular,personas_n,fecha_ingreso,estado,codigo,constancia_at,pago_verificado,condiciones_verificadas,notas,guia_id';
 function leerLocal(){ try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || '{}'); } catch (e) { return {}; } }
 function guardarLocal(m){ localStorage.setItem(LOCAL_KEY, JSON.stringify(m)); }
+// Guías de la lista del Cabildo (en modo de prueba; con la base compartida se leen de la tabla guias)
+const GUIAS_PRUEBA = [
+  { id: 1, nombre: 'Claudia Escobar', tarjeta_profesional: 'TP 2949', tipo: 'guia' },
+  { id: 2, nombre: 'Edier Fernández', tarjeta_profesional: 'TP 4913', tipo: 'guia' },
+  { id: 3, nombre: 'Fernando Navia', tarjeta_profesional: 'TP 4342', tipo: 'guia' },
+  { id: 4, nombre: 'María Paula Fernández', tarjeta_profesional: 'TP 5230', tipo: 'guia' },
+  { id: 5, nombre: 'Hugo Pizo', tarjeta_profesional: 'TP 5796', tipo: 'guia' },
+  { id: 6, nombre: 'Jhon Jairo Ordóñez', tarjeta_profesional: 'TP 2975', tipo: 'guia' },
+  { id: 7, nombre: 'Noé Mazabuel', tarjeta_profesional: 'TP 4968', tipo: 'guia' },
+  { id: 8, nombre: 'Informador turístico (guardia indígena)', tarjeta_profesional: '', tipo: 'informador' },
+];
+// Ajustes y cupos por fecha, en modo de prueba
+function leerObjLocal(clave){ try { return JSON.parse(localStorage.getItem(clave) || '{}'); } catch (e) { return {}; } }
+function guardarObjLocal(clave, o){ localStorage.setItem(clave, JSON.stringify(o)); }
 
 const DB = {
   cliente: null,
@@ -3142,6 +3156,57 @@ const DB = {
   async entrar(correo, clave){
     const { error } = await this.cliente.auth.signInWithPassword({ email: correo, password: clave });
     if (error) throw new Error(error.message);
+  },
+  async listarGuias(){
+    if (this.cliente){
+      const { data, error } = await this.cliente.from('guias').select('id,nombre,tarjeta_profesional,tipo').eq('activo', true).order('tipo').order('nombre');
+      if (error) throw new Error(error.message);
+      return data;
+    }
+    return GUIAS_PRUEBA;
+  },
+  async leerAjustes(){
+    if (this.cliente){
+      const { data, error } = await this.cliente.from('ajustes').select('clave,valor');
+      if (error) throw new Error(error.message);
+      const m = { cupo_diario: 30 };
+      (data || []).forEach(r => { m[r.clave] = r.valor; });
+      return m;
+    }
+    return { cupo_diario: 30, ...leerObjLocal('ajustes-demo') };
+  },
+  async guardarAjuste(clave, valor){
+    if (this.cliente){
+      const { error } = await this.cliente.from('ajustes').upsert({ clave, valor }, { onConflict: 'clave' });
+      if (error) throw new Error(error.message);
+      return;
+    }
+    const a = leerObjLocal('ajustes-demo'); a[clave] = valor; guardarObjLocal('ajustes-demo', a);
+  },
+  async cupoFechas(){
+    if (this.cliente){
+      const { data, error } = await this.cliente.from('cupo_fechas').select('fecha,cupo');
+      if (error) throw new Error(error.message);
+      return data || [];
+    }
+    const c = leerObjLocal('cupo-fechas-demo');
+    return Object.entries(c).map(([fecha, cupo]) => ({ fecha, cupo }));
+  },
+  async guardarCupoFecha(fecha, cupo){
+    if (this.cliente){
+      const { error } = await this.cliente.from('cupo_fechas').upsert({ fecha, cupo }, { onConflict: 'fecha' });
+      if (error) throw new Error(error.message);
+      return;
+    }
+    const c = leerObjLocal('cupo-fechas-demo'); c[fecha] = cupo; guardarObjLocal('cupo-fechas-demo', c);
+  },
+  async borrarCupoFecha(fecha){
+    if (this.cliente){
+      const { error } = await this.cliente.from('cupo_fechas').delete().eq('fecha', fecha);
+      if (error) throw new Error(error.message);
+      return;
+    }
+    const c = leerObjLocal('cupo-fechas-demo'); delete c[fecha]; guardarObjLocal('cupo-fechas-demo', c);
   },
   async salir(){ if (this.cliente) await this.cliente.auth.signOut(); }
 };
