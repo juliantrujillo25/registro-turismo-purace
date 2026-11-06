@@ -3136,7 +3136,7 @@ Object.assign(T.de, { 'c.guia': 'Führer', 'c.guardia': 'Indigene Wache als Begl
 
 /* Constancia pensada para celular: una columna, letra grande y QR grandes.
    Se dibuja en dos pasadas: la primera mide la altura y la segunda dibuja. */
-function dibujarConstancia(rec, url){
+function dibujarConstanciaCelular(rec, url){
   const W = 640, M = 36, AZUL = '#1e4a7a', VERDE = '#7fbc4d', MUTED = '#5a6d7e', TEXTO = '#1a2e3a', BEIGE = '#f6f1e8';
   const F = {
     titulo: '800 30px system-ui, Arial', org: '700 17px system-ui, Arial', terr: '18px system-ui, Arial',
@@ -3451,11 +3451,13 @@ async function codigoDe(core){
   return (await sha256Hex(canon(hashable(core)))).slice(0, 12).toUpperCase();
 }
 // Dibuja la constancia en el idioma del visitante (no cambia el idioma de la pantalla)
-async function constanciaPNG(rec, idioma){
+// formato 'escritorio' (panel: hoja completa) o 'celular' (WhatsApp: una columna)
+async function constanciaPNG(rec, idioma, formato = 'escritorio'){
   const previo = lang;
   lang = idioma || rec.idioma || 'es';
   try {
-    const cv = dibujarConstancia(rec, urlVerificacion(rec.folio, rec.codigo));
+    const dibujar = formato === 'celular' ? dibujarConstanciaCelular : dibujarConstanciaEscritorio;
+    const cv = dibujar(rec, urlVerificacion(rec.folio, rec.codigo));
     return await new Promise(r => cv.toBlob(r, 'image/png'));
   } finally { lang = previo; }
 }
@@ -3650,7 +3652,7 @@ async function descargarImagen(){
 }
 async function enviarVisitante(){
   const { fila, datos } = detalle;
-  const png = await constanciaPNG(registroConCodigo(), datos.idioma);
+  const png = await constanciaPNG(registroConCodigo(), datos.idioma, 'celular');
   const file = new File([png], `Constancia-${fila.folio}.png`, { type: 'image/png' });
   const previo = lang; lang = datos.idioma || 'es';
   const texto = t('share.text', { folio: fila.folio });
