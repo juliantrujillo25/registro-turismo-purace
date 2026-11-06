@@ -2904,7 +2904,13 @@ function dibujarConstancia(rec, url){
   const QR_TAM = 240;   // QR de texto (sin internet): más módulos, necesita más tamaño para leerse bien
   const LINK_TAM = 120; // QR de enlace (con internet): se abre directo en el navegador
   const filaH = 36, encabH = 120, infoH = 150, tituloTabla = 80, encabTabla = 34, qrT = 320, pieH = 40;
-  const H = encabH + infoH + tituloTabla + encabTabla + rec.personas.length * filaH + 30 + qrT + pieH + 20;
+  // Acompañamiento: guía y guardia indígena (si los hay); no entran en el código de verificación
+  const acomp = [
+    rec.guiaNombre ? [t('c.guia'), rec.guiaNombre] : null,
+    rec.guardia_nombre ? [t('c.guardia'), rec.guardia_nombre] : null,
+  ].filter(Boolean);
+  const acompAlto = acomp.length ? 14 + 24 * acomp.length : 0;
+  const H = encabH + infoH + tituloTabla + encabTabla + rec.personas.length * filaH + 30 + acompAlto + qrT + pieH + 20;
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const c = cv.getContext('2d');
   const txt = (s, x, y, font, color, align = 'left') => { c.font = font; c.fillStyle = color; c.textAlign = align; c.fillText(s, x, y); c.textAlign = 'left'; };
@@ -2963,6 +2969,13 @@ function dibujarConstancia(rec, url){
 
   // Pie con QR de verificación
   y += 30;
+  if (acomp.length){
+    y += 14;
+    acomp.forEach(([etq, val]) => {
+      txt(fit(`${etq}: ${val}`, W - 2 * M, '600 15px system-ui, Arial'), M, y + 16, '600 15px system-ui, Arial', TEXTO);
+      y += 24;
+    });
+  }
   const qrX = W - M - QR_TAM;
   dibujarQR(c, textoQR(rec, url), qrX, y, QR_TAM);
   etiqueta(t('c.pdf.qrTexto'), qrX, y + QR_TAM + 16);
@@ -3113,6 +3126,13 @@ Object.assign(T.de, {
   'v.sinBase': 'Dieser Eintrag kann auf dieser Seite nicht abgerufen werden. Bitte im Panel des Cabildo prüfen.',
   'v.p2': 'Vergleichen Sie Name und letzte Ziffern des Dokuments mit dem Ausweis der Person. Alle Angaben finden Sie im Panel des Cabildo.'
 });
+
+/* Constancia: guía y guardia que acompaña */
+Object.assign(T.es, { 'c.guia': 'Guía', 'c.guardia': 'Guardia indígena que acompaña' });
+Object.assign(T.en, { 'c.guia': 'Guide', 'c.guardia': 'Indigenous guard accompanying' });
+Object.assign(T.fr, { 'c.guia': 'Guide', 'c.guardia': 'Garde autochtone accompagnateur' });
+Object.assign(T.pt, { 'c.guia': 'Guia', 'c.guardia': 'Guarda indígena que acompanha' });
+Object.assign(T.de, { 'c.guia': 'Führer', 'c.guardia': 'Indigene Wache als Begleitung' });
 
 /* Constancia: dos códigos QR (sin internet: texto; con internet: enlace) */
 Object.assign(T.es, {
@@ -3491,7 +3511,13 @@ async function guardarVerificacion(){
   } catch (e) { alert('No se pudo guardar: ' + e.message); }
 }
 
-function registroConCodigo(){ const { fila, datos } = detalle; return { ...datos, codigo: fila.codigo }; }
+// Datos para la constancia: el código sigue calculado solo con los datos del registro;
+// guía y guardia se muestran impresos pero no entran en el código de verificación.
+function registroConCodigo(){
+  const { fila, datos } = detalle;
+  const g = guias.find(x => String(x.id) === String(fila.guia_id));
+  return { ...datos, codigo: fila.codigo, guiaNombre: g ? g.nombre : '', guardia_nombre: fila.guardia_nombre || '' };
+}
 async function verImagen(){
   const png = await constanciaPNG(registroConCodigo(), detalle.datos.idioma);
   window.open(URL.createObjectURL(png), '_blank');
