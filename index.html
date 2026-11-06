@@ -2825,8 +2825,9 @@ function dibujarQR(ctx, texto, x, y, tam){
 function dibujarConstancia(rec, url){
   const W = 800, M = 40, AZUL = '#1e4a7a', VERDE = '#7fbc4d', MUTED = '#5a6d7e', TEXTO = '#1a2e3a';
   const FUENTE = '16px system-ui, Arial';
-  const QR_TAM = 300;  // texto en QR: más módulos, necesita más tamaño para leerse bien
-  const filaH = 36, encabH = 120, infoH = 150, tituloTabla = 80, encabTabla = 34, qrT = QR_TAM + 20, pieH = 110;
+  const QR_TAM = 300;   // QR de texto (sin internet): más módulos, necesita más tamaño para leerse bien
+  const LINK_TAM = 170; // QR de enlace (con internet): se abre directo en el navegador
+  const filaH = 36, encabH = 120, infoH = 150, tituloTabla = 80, encabTabla = 34, qrT = QR_TAM + 36 + LINK_TAM + 20, pieH = 110;
   const H = encabH + infoH + tituloTabla + encabTabla + rec.personas.length * filaH + 30 + qrT + pieH + 20;
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const c = cv.getContext('2d');
@@ -2888,12 +2889,21 @@ function dibujarConstancia(rec, url){
   y += 30;
   const qrX = W - M - QR_TAM;
   dibujarQR(c, textoQR(rec, url), qrX, y, QR_TAM);
+  etiqueta(t('c.pdf.qrTexto'), qrX, y + QR_TAM + 16);
   let ty = y + 22;
   [t('c.pdf.scan'), t('c.pdf.data')].forEach(l => {
     wrap(l, qrX - M - 20, '15px system-ui, Arial').forEach(linea => { txt(linea, M, ty, '15px system-ui, Arial', TEXTO); ty += 22; });
     ty += 8;
   });
   txt(t('c.pdf.code') + ' ' + formatCodigo(rec.codigo), M, ty + 6, '700 16px ui-monospace, Consolas, monospace', AZUL);
+
+  // QR de enlace (con internet), debajo del de texto
+  const y2 = y + QR_TAM + 36;
+  dibujarQR(c, url, M, y2, LINK_TAM);
+  let ly = y2 + 14;
+  etiqueta(t('c.pdf.qrWeb'), M + LINK_TAM + 20, ly);
+  ly += 24;
+  wrap(t('c.pdf.qrWebTxt'), W - 2 * M - LINK_TAM - 20, '15px system-ui, Arial').forEach(linea => { txt(linea, M + LINK_TAM + 20, ly, '15px system-ui, Arial', TEXTO); ly += 22; });
 
   // Banda inferior
   c.fillStyle = VERDE; c.fillRect(0, H - 12, W, 12);
@@ -3026,6 +3036,33 @@ Object.assign(T.de, {
   'v.nocoincide': 'Der Code passt nicht zu dieser Nummer. Diese Bescheinigung nicht akzeptieren.',
   'v.sinBase': 'Dieser Eintrag kann auf dieser Seite nicht abgerufen werden. Bitte im Panel des Cabildo prüfen.',
   'v.p2': 'Vergleichen Sie Name und letzte Ziffern des Dokuments mit dem Ausweis der Person. Alle Angaben finden Sie im Panel des Cabildo.'
+});
+
+/* Constancia: dos códigos QR (sin internet: texto; con internet: enlace) */
+Object.assign(T.es, {
+  'c.pdf.qrTexto': 'SIN INTERNET: datos de la constancia',
+  'c.pdf.qrWeb': 'CON INTERNET: abrir la verificación',
+  'c.pdf.qrWebTxt': 'Escanee este código con internet para ver la verificación en línea del registro.'
+});
+Object.assign(T.en, {
+  'c.pdf.qrTexto': 'NO INTERNET: certificate data',
+  'c.pdf.qrWeb': 'WITH INTERNET: open verification',
+  'c.pdf.qrWebTxt': 'Scan this code with internet access to open the online verification of the registration.'
+});
+Object.assign(T.fr, {
+  'c.pdf.qrTexto': 'SANS INTERNET : données de l\'attestation',
+  'c.pdf.qrWeb': 'AVEC INTERNET : ouvrir la vérification',
+  'c.pdf.qrWebTxt': 'Scannez ce code avec internet pour ouvrir la vérification en ligne de l\'inscription.'
+});
+Object.assign(T.pt, {
+  'c.pdf.qrTexto': 'SEM INTERNET: dados da declaração',
+  'c.pdf.qrWeb': 'COM INTERNET: abrir a verificação',
+  'c.pdf.qrWebTxt': 'Leia este código com internet para abrir a verificação online do registo.'
+});
+Object.assign(T.de, {
+  'c.pdf.qrTexto': 'OHNE INTERNET: Daten der Bescheinigung',
+  'c.pdf.qrWeb': 'MIT INTERNET: Prüfung öffnen',
+  'c.pdf.qrWebTxt': 'Mit Internetzugang scannen, um die Online-Prüfung der Registrierung zu öffnen.'
 });
 
 
