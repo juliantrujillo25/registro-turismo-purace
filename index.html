@@ -2769,6 +2769,33 @@ function urlVerificacion(folio, codigo){
   const base = CONFIG.urlBase || location.href.split(/[?#]/)[0];
   return `${base.split('#')[0]}#v=${folio}.${codigo}`;
 }
+/* Texto del QR de la constancia: se lee sin internet. Solo ASCII, sin tildes ni símbolos,
+   para que cualquier lector de QR lo muestre igual. No incluye el estado (cambia con el tiempo);
+   el enlace de la última línea sirve para consultarlo en línea. */
+const sinTildes = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '');
+const inicialesNombre = s => sinTildes(s).trim().split(/\s+/).filter(Boolean).map(w => w[0].toUpperCase() + '.').join(' ');
+function textoQR(rec, url){
+  const p = rec.personas || [];
+  const fechaIng = String(rec.fechaIngreso || '').split('-').reverse().join('/');
+  const lineas = [
+    'CABILDO INDIGENA DE PURACE',
+    'CONSTANCIA DE REGISTRO DE INGRESO',
+    `Folio: ${rec.folio}`,
+    `Codigo: ${rec.codigo}`,
+    `Fecha de ingreso: ${fechaIng}`,
+  ];
+  if (rec.tipo === 'grupo'){
+    lineas.push(`Grupo: ${p.length} persona(s)`);
+    lineas.push(`Responsable: ${inicialesNombre(rec.lider?.nombre)}`);
+  } else {
+    const d = p[0] || {};
+    const num = String(d.docNumero ?? '');
+    lineas.push(`Titular: ${inicialesNombre(d.nombre)}`);
+    lineas.push(`Documento: ${sinTildes(d.docTipo)} ${'*'.repeat(Math.max(num.length - 4, 0))}${num.slice(-4)}`);
+  }
+  lineas.push(`Verificacion en linea: ${url}`);
+  return lineas.join('\n');
+}
 function mostrarMsg(id, tipoMsg, texto){ const el = $(id); el.className = 'msg ' + tipoMsg; el.textContent = texto; }
 function ocultarMsg(id){ const el = $(id); el.className = 'msg'; el.textContent = ''; }
 function descargar(blob, nombre){
@@ -2798,7 +2825,8 @@ function dibujarQR(ctx, texto, x, y, tam){
 function dibujarConstancia(rec, url){
   const W = 800, M = 40, AZUL = '#1e4a7a', VERDE = '#7fbc4d', MUTED = '#5a6d7e', TEXTO = '#1a2e3a';
   const FUENTE = '16px system-ui, Arial';
-  const filaH = 36, encabH = 120, infoH = 150, tituloTabla = 80, encabTabla = 34, qrT = 190, pieH = 110;
+  const QR_TAM = 300;  // texto en QR: más módulos, necesita más tamaño para leerse bien
+  const filaH = 36, encabH = 120, infoH = 150, tituloTabla = 80, encabTabla = 34, qrT = QR_TAM + 20, pieH = 110;
   const H = encabH + infoH + tituloTabla + encabTabla + rec.personas.length * filaH + 30 + qrT + pieH + 20;
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const c = cv.getContext('2d');
@@ -2858,8 +2886,8 @@ function dibujarConstancia(rec, url){
 
   // Pie con QR de verificación
   y += 30;
-  const qrX = W - M - 170;
-  dibujarQR(c, url, qrX, y, 170);
+  const qrX = W - M - QR_TAM;
+  dibujarQR(c, textoQR(rec, url), qrX, y, QR_TAM);
   let ty = y + 22;
   [t('c.pdf.scan'), t('c.pdf.data')].forEach(l => {
     wrap(l, qrX - M - 20, '15px system-ui, Arial').forEach(linea => { txt(linea, M, ty, '15px system-ui, Arial', TEXTO); ty += 22; });

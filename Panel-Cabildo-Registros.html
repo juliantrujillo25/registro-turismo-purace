@@ -4,74 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Panel del Cabildo · Registros de ingreso</title>
-<style>
-:root{--azul:#1e4a7a;--azul-osc:#163a61;--verde:#7fbc4d;--naranja:#ea8a33;--cielo:#3bb4e5;--beige:#f6f1e8;--texto:#1a2e3a;--muted:#5a6d7e;--linea:#e3dccd;--error:#b3261e;--ok:#2f7a1b}
-*{box-sizing:border-box}
-html,body{margin:0}
-body{background:var(--beige);color:var(--texto);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;min-height:100vh}
-header{background:linear-gradient(135deg,var(--azul),var(--cielo));color:#fff;padding:18px 20px}
-header .org{font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.92}
-header h1{margin:4px 0 0;font-size:22px}
-main{max-width:1080px;margin:0 auto;padding:18px 16px 40px}
-.card{background:#fff;border:1px solid var(--linea);border-radius:14px;padding:18px;margin-bottom:16px}
-h2{font-size:17px;margin:0 0 12px;color:var(--azul)}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.stat{background:var(--beige);border-radius:12px;padding:14px}
-.stat .n{font-size:28px;font-weight:800;color:var(--azul)}
-.stat .l{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700}
-input,select,textarea{font:inherit;padding:10px 12px;border:1.5px solid #cfc6b4;border-radius:10px;background:#fff;color:var(--texto);min-width:0}
-input[type=text],input[type=search],input[type=url]{width:100%}
-input:focus{outline:3px solid rgba(59,180,229,.35);border-color:var(--cielo)}
-button{font:inherit;cursor:pointer}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 14px;border-radius:10px;border:1.5px solid var(--azul);background:var(--azul);color:#fff;font-weight:700;font-size:14px}
-.btn:hover{background:var(--azul-osc)}
-.btn.sec{background:#fff;color:var(--azul)}
-.btn.peligro{background:#fff;color:var(--error);border-color:var(--error)}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.acciones{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.drop{border:2px dashed #b9b09c;border-radius:14px;padding:22px;text-align:center;background:#fdfbf7;color:var(--muted)}
-.drop.over{border-color:var(--cielo);background:#e8f5fc}
-.msg{border-radius:10px;padding:10px 12px;margin-top:12px;font-size:14px;display:none}
-.msg.ok{display:block;background:#edf7e3;color:#2f5a12;border:1px solid #c5e3a4}
-.msg.err{display:block;background:#fdecea;color:#7a1b15;border:1px solid #f1b8b2}
-.msg.info{display:block;background:#e8f5fc;color:#124a68;border:1px solid #b5e0f5}
-table.tabla{width:100%;border-collapse:collapse;font-size:14px}
-table.tabla th,table.tabla td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--linea);vertical-align:top}
-table.tabla th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.05em;position:sticky;top:0;background:#fff}
-table.tabla tr.fila{cursor:pointer}
-table.tabla tr.fila:hover td{background:#f6f9fc}
-.scroll{max-height:420px;overflow:auto;border:1px solid var(--linea);border-radius:10px}
-.folio{font-family:ui-monospace,Consolas,monospace;font-weight:700;color:var(--azul)}
-.codigo{font-family:ui-monospace,Consolas,monospace;font-weight:700;letter-spacing:.08em}
-.badge{display:inline-block;border-radius:99px;padding:2px 9px;font-size:12px;font-weight:700;background:#e8f5fc;color:#124a68}
-.badge.g{background:#edf7e3;color:#2f5a12}
-.badge.r{background:#fdecea;color:#7a1b15}
-.res{margin-top:12px;border-radius:12px;padding:14px;font-size:15px}
-.res.ok{background:#edf7e3;border:1px solid #c5e3a4;color:#2f5a12}
-.res.err{background:#fdecea;border:1px solid #f1b8b2;color:#7a1b15}
-.res.info{background:#fff4e5;border:1px solid #f5d3a1;color:#7a4a00}
-.visor{display:none;margin-top:12px;position:relative}
-.visor video{width:100%;max-width:420px;border-radius:12px;background:#000}
-.hidden{display:none!important}
-dialog{border:0;border-radius:16px;padding:0;width:min(860px,94vw);max-height:90vh;box-shadow:0 20px 60px rgba(0,0,0,.3)}
-dialog::backdrop{background:rgba(20,30,40,.5)}
-.dlg-head{background:var(--azul);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px}
-.dlg-body{padding:18px;overflow:auto;max-height:calc(90vh - 130px)}
-.dlg-foot{padding:12px 18px;border-top:1px solid var(--linea);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
-.dato{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700}
-.firma-img{height:60px;border:1px solid var(--linea);border-radius:8px;background:#fff}
-.qrbox{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
-.qrbox canvas{width:200px;height:200px;image-rendering:pixelated;border:1px solid var(--linea);border-radius:8px;background:#fff}
-.solo-imprimir{display:none}
-@media (max-width:820px){.grid2{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
-@media print{
-  body *{visibility:hidden}
-  .solo-imprimir,.solo-imprimir *{visibility:visible}
-  .solo-imprimir{display:block;position:absolute;left:0;top:0;width:100%;text-align:center;padding:30px}
-  .solo-imprimir canvas{width:320px;height:320px}
-}
-</style>
+<!--STYLE-->
 <style>
 .filtros{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 .filtros button{border:1.5px solid var(--azul);background:#fff;color:var(--azul);border-radius:99px;padding:6px 12px;font-weight:700;font-size:13px;cursor:pointer}
@@ -2807,6 +2740,33 @@ function urlVerificacion(folio, codigo){
   const base = CONFIG.urlBase || location.href.split(/[?#]/)[0];
   return `${base.split('#')[0]}#v=${folio}.${codigo}`;
 }
+/* Texto del QR de la constancia: se lee sin internet. Solo ASCII, sin tildes ni símbolos,
+   para que cualquier lector de QR lo muestre igual. No incluye el estado (cambia con el tiempo);
+   el enlace de la última línea sirve para consultarlo en línea. */
+const sinTildes = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '');
+const inicialesNombre = s => sinTildes(s).trim().split(/\s+/).filter(Boolean).map(w => w[0].toUpperCase() + '.').join(' ');
+function textoQR(rec, url){
+  const p = rec.personas || [];
+  const fechaIng = String(rec.fechaIngreso || '').split('-').reverse().join('/');
+  const lineas = [
+    'CABILDO INDIGENA DE PURACE',
+    'CONSTANCIA DE REGISTRO DE INGRESO',
+    `Folio: ${rec.folio}`,
+    `Codigo: ${rec.codigo}`,
+    `Fecha de ingreso: ${fechaIng}`,
+  ];
+  if (rec.tipo === 'grupo'){
+    lineas.push(`Grupo: ${p.length} persona(s)`);
+    lineas.push(`Responsable: ${inicialesNombre(rec.lider?.nombre)}`);
+  } else {
+    const d = p[0] || {};
+    const num = String(d.docNumero ?? '');
+    lineas.push(`Titular: ${inicialesNombre(d.nombre)}`);
+    lineas.push(`Documento: ${sinTildes(d.docTipo)} ${'*'.repeat(Math.max(num.length - 4, 0))}${num.slice(-4)}`);
+  }
+  lineas.push(`Verificacion en linea: ${url}`);
+  return lineas.join('\n');
+}
 function mostrarMsg(id, tipoMsg, texto){ const el = $(id); el.className = 'msg ' + tipoMsg; el.textContent = texto; }
 function ocultarMsg(id){ const el = $(id); el.className = 'msg'; el.textContent = ''; }
 function descargar(blob, nombre){
@@ -2836,7 +2796,8 @@ function dibujarQR(ctx, texto, x, y, tam){
 function dibujarConstancia(rec, url){
   const W = 800, M = 40, AZUL = '#1e4a7a', VERDE = '#7fbc4d', MUTED = '#5a6d7e', TEXTO = '#1a2e3a';
   const FUENTE = '16px system-ui, Arial';
-  const filaH = 36, encabH = 120, infoH = 150, tituloTabla = 80, encabTabla = 34, qrT = 190, pieH = 110;
+  const QR_TAM = 300;  // texto en QR: más módulos, necesita más tamaño para leerse bien
+  const filaH = 36, encabH = 120, infoH = 150, tituloTabla = 80, encabTabla = 34, qrT = QR_TAM + 20, pieH = 110;
   const H = encabH + infoH + tituloTabla + encabTabla + rec.personas.length * filaH + 30 + qrT + pieH + 20;
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const c = cv.getContext('2d');
@@ -2896,8 +2857,8 @@ function dibujarConstancia(rec, url){
 
   // Pie con QR de verificación
   y += 30;
-  const qrX = W - M - 170;
-  dibujarQR(c, url, qrX, y, 170);
+  const qrX = W - M - QR_TAM;
+  dibujarQR(c, textoQR(rec, url), qrX, y, QR_TAM);
   let ty = y + 22;
   [t('c.pdf.scan'), t('c.pdf.data')].forEach(l => {
     wrap(l, qrX - M - 20, '15px system-ui, Arial').forEach(linea => { txt(linea, M, ty, '15px system-ui, Arial', TEXTO); ty += 22; });
@@ -2909,6 +2870,7 @@ function dibujarConstancia(rec, url){
   c.fillStyle = VERDE; c.fillRect(0, H - 12, W, 12);
   return cv;
 }
+
 
 
 /* ============================================================
@@ -2984,6 +2946,59 @@ Object.assign(T.de, {
   'sent.respaldo': 'Per WhatsApp als Sicherung senden',
   'sent.modoPrueba': 'Testmodus: Die Registrierung wird nur in diesem Browser gespeichert.'
 });
+
+/* Verificación pública: datos enmascarados (inicial del nombre y últimos 4 dígitos del documento) */
+Object.assign(T.es, {
+  'v.estado': 'Estado', 'v.titular': 'Titular', 'v.documento': 'Documento',
+  'v.grupo': 'Grupo de {n} persona(s). Responsable',
+  'v.est.recibido': 'Recibido: pendiente de constancia y verificación',
+  'v.est.constancia': 'Constancia emitida: pendiente de verificación de pago y condiciones',
+  'v.est.habilitado': 'Habilitado para el ingreso',
+  'v.nocoincide': 'El código no corresponde a este folio. No acepte esta constancia.',
+  'v.sinBase': 'Este registro no se puede consultar desde esta página. Verifique en el panel del Cabildo.',
+  'v.p2': 'Compare el nombre y los últimos dígitos del documento con la cédula de la persona. Para ver todos los datos, consulte en el panel del Cabildo.'
+});
+Object.assign(T.en, {
+  'v.estado': 'Status', 'v.titular': 'Holder', 'v.documento': 'Document',
+  'v.grupo': 'Group of {n} person(s). Lead',
+  'v.est.recibido': 'Received: pending certificate and verification',
+  'v.est.constancia': 'Certificate issued: pending verification of payment and conditions',
+  'v.est.habilitado': 'Cleared for entry',
+  'v.nocoincide': 'The code does not match this folio. Do not accept this certificate.',
+  'v.sinBase': 'This record cannot be checked from this page. Verify it in the Cabildo panel.',
+  'v.p2': 'Compare the name and last digits of the document with the person\'s ID. For full details, check the Cabildo panel.'
+});
+Object.assign(T.fr, {
+  'v.estado': 'Statut', 'v.titular': 'Titulaire', 'v.documento': 'Document',
+  'v.grupo': 'Groupe de {n} personne(s). Responsable',
+  'v.est.recibido': 'Reçu : en attente de l\'attestation et de la vérification',
+  'v.est.constancia': 'Attestation émise : en attente de la vérification du paiement et des conditions',
+  'v.est.habilitado': 'Entrée autorisée',
+  'v.nocoincide': 'Le code ne correspond pas à ce numéro de dossier. N\'acceptez pas cette attestation.',
+  'v.sinBase': 'Cet enregistrement ne peut pas être consulté depuis cette page. Vérifiez dans le panneau du Cabildo.',
+  'v.p2': 'Comparez le nom et les derniers chiffres du document avec la pièce d\'identité. Pour tous les détails, consultez le panneau du Cabildo.'
+});
+Object.assign(T.pt, {
+  'v.estado': 'Estado', 'v.titular': 'Titular', 'v.documento': 'Documento',
+  'v.grupo': 'Grupo de {n} pessoa(s). Responsável',
+  'v.est.recibido': 'Recebido: pendente de declaração e verificação',
+  'v.est.constancia': 'Declaração emitida: pendente de verificação do pagamento e das condições',
+  'v.est.habilitado': 'Habilitado para a entrada',
+  'v.nocoincide': 'O código não corresponde a este folio. Não aceite esta declaração.',
+  'v.sinBase': 'Este registo não pode ser consultado nesta página. Verifique no painel do Cabildo.',
+  'v.p2': 'Compare o nome e os últimos dígitos do documento com o documento de identidade da pessoa. Para ver todos os dados, consulte o painel do Cabildo.'
+});
+Object.assign(T.de, {
+  'v.estado': 'Status', 'v.titular': 'Inhaber', 'v.documento': 'Dokument',
+  'v.grupo': 'Gruppe von {n} Person(en). Verantwortliche/r',
+  'v.est.recibido': 'Eingegangen: Bescheinigung und Prüfung ausstehend',
+  'v.est.constancia': 'Bescheinigung ausgestellt: Prüfung von Zahlung und Bedingungen ausstehend',
+  'v.est.habilitado': 'Zum Eintritt freigegeben',
+  'v.nocoincide': 'Der Code passt nicht zu dieser Nummer. Diese Bescheinigung nicht akzeptieren.',
+  'v.sinBase': 'Dieser Eintrag kann auf dieser Seite nicht abgerufen werden. Bitte im Panel des Cabildo prüfen.',
+  'v.p2': 'Vergleichen Sie Name und letzte Ziffern des Dokuments mit dem Ausweis der Person. Alle Angaben finden Sie im Panel des Cabildo.'
+});
+
 
 /* ============================================================
    ALMACÉN COMPARTIDO: Supabase, o modo local de prueba
@@ -3271,8 +3286,10 @@ async function verificarEntrada(texto){
   const m = /PC-\d{6}-[A-Z2-9]{4}/i.exec(texto || '');
   if (!m){ aviso(res, 'err', 'No se reconoce el folio. Debe tener la forma <b>PC-AAMMDD-XXXX</b>.'); return; }
   const folio = m[0].toUpperCase();
+  // Texto plano del QR ("Codigo: 5972B94A2423") o enlace (…#v=FOLIO.CODIGO)
+  const etiqueta = /c[oó]digo\s*:?\s*([0-9A-Fa-f]{4}\s*[0-9A-Fa-f]{4}\s*[0-9A-Fa-f]{4})/i.exec(texto);
   const resto = texto.slice(m.index + m[0].length).replace(/\s/g, '');
-  const cod = ((resto.match(/[0-9A-Fa-f]{12}/) || [])[0] || '').toUpperCase();
+  const cod = (etiqueta ? etiqueta[1].replace(/\s/g, '') : ((resto.match(/[0-9A-Fa-f]{12}/) || [])[0] || '')).toUpperCase();
   const fila = registros.find(r => r.folio === folio);
   if (!fila){ aviso(res, 'err', `El folio <b class="folio">${esc(folio)}</b> no está en el registro.`); return; }
   if (!fila.codigo){ aviso(res, 'info', `El folio <b class="folio">${esc(folio)}</b> existe, pero todavía no tiene constancia emitida.`); return; }
