@@ -3071,7 +3071,7 @@ Object.assign(T.de, {
    Con CONFIG.supabaseUrl y CONFIG.supabaseKey vacíos, todo se guarda solo en este navegador.
    ============================================================ */
 const LOCAL_KEY = 'registros-demo';
-const COLS_LISTA = 'folio,creado,tipo,contacto,titular,personas_n,fecha_ingreso,estado,codigo,constancia_at,pago_verificado,condiciones_verificadas,notas,guia_id';
+const COLS_LISTA = 'folio,creado,tipo,contacto,titular,personas_n,fecha_ingreso,estado,codigo,constancia_at,pago_verificado,condiciones_verificadas,notas,guia_id,guardia_nombre';
 function leerLocal(){ try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || '{}'); } catch (e) { return {}; } }
 function guardarLocal(m){ localStorage.setItem(LOCAL_KEY, JSON.stringify(m)); }
 // Guías de la lista del Cabildo (en modo de prueba; con la base compartida se leen de la tabla guias)

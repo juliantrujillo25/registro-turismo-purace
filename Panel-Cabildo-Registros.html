@@ -3147,7 +3147,7 @@ Object.assign(T.de, {
    Con CONFIG.supabaseUrl y CONFIG.supabaseKey vacíos, todo se guarda solo en este navegador.
    ============================================================ */
 const LOCAL_KEY = 'registros-demo';
-const COLS_LISTA = 'folio,creado,tipo,contacto,titular,personas_n,fecha_ingreso,estado,codigo,constancia_at,pago_verificado,condiciones_verificadas,notas,guia_id';
+const COLS_LISTA = 'folio,creado,tipo,contacto,titular,personas_n,fecha_ingreso,estado,codigo,constancia_at,pago_verificado,condiciones_verificadas,notas,guia_id,guardia_nombre';
 function leerLocal(){ try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || '{}'); } catch (e) { return {}; } }
 function guardarLocal(m){ localStorage.setItem(LOCAL_KEY, JSON.stringify(m)); }
 // Guías de la lista del Cabildo (en modo de prueba; con la base compartida se leen de la tabla guias)
@@ -3413,6 +3413,10 @@ function pintarDetalle(){
         </select>
         <button class="btn sec" type="button" id="btnGuia">Guardar guía</button>
       </div>
+      <div style="margin-top:10px">
+        <div class="dato">Guardia indígena que acompaña (si no es el guía)</div>
+        <div class="acciones"><input type="text" id="txtGuardia" maxlength="120" value="${esc(fila.guardia_nombre || '')}" placeholder="Nombre completo del guardia" style="min-width:260px"></div>
+      </div>
       <p class="nota-p">Quien acompaña al grupo en el recorrido. Queda guardado en la base de datos.</p>
     </div>
 
@@ -3452,9 +3456,11 @@ function pintarDetalle(){
 async function guardarGuia(){
   const { fila } = detalle;
   const v = $('#selGuia').value;
+  const guardia = $('#txtGuardia').value.trim();
+  const cambios = { guia_id: v ? Number(v) : null, guardia_nombre: guardia };
   try {
-    await DB.actualizar(fila.folio, { guia_id: v ? Number(v) : null });
-    Object.assign(fila, { guia_id: v ? Number(v) : null });
+    await DB.actualizar(fila.folio, cambios);
+    Object.assign(fila, cambios);
     await cargar();
     pintarDetalle();
   } catch (e) { alert('No se pudo guardar el guía: ' + e.message); }
@@ -3556,7 +3562,7 @@ function pintarDia(){
       <thead><tr><th>Folio</th><th>Titular</th><th>Personas</th><th>Guía</th><th>Estado</th></tr></thead>
       <tbody>${lista.map(r => `<tr class="fila" data-folio="${esc(r.folio)}" style="cursor:pointer">
         <td class="folio">${esc(r.folio)}</td><td>${esc(r.titular)}</td><td>${r.personas_n}</td>
-        <td>${esc(nombreGuia(r.guia_id))}</td>
+        <td>${esc(nombreGuia(r.guia_id))}${r.guardia_nombre ? `<div class="dato" style="text-transform:none">Guardia: ${esc(r.guardia_nombre)}</div>` : ''}</td>
         <td><span class="estado ${ESTADO_CLASE[r.estado] || ''}">${ESTADO_TXT[r.estado] || r.estado}</span></td></tr>`).join('')}
       </tbody></table></div>` : '<p class="nota-p">Aún no hay reservas para este día.</p>'}`;
   if (document.activeElement !== $('#cupoDia')) $('#cupoDia').value = especial ? cupo : '';
