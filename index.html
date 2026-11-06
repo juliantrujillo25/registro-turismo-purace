@@ -2822,7 +2822,7 @@ function dibujarQR(ctx, texto, x, y, tam){
   return total;
 }
 
-function dibujarConstancia(rec, url){
+function dibujarConstanciaEscritorio(rec, url){
   const W = 800, M = 40, AZUL = '#1e4a7a', VERDE = '#7fbc4d', MUTED = '#5a6d7e', TEXTO = '#1a2e3a';
   const FUENTE = '16px system-ui, Arial';
   const QR_TAM = 240;   // QR de texto (sin internet): más módulos, necesita más tamaño para leerse bien
@@ -3057,6 +3057,128 @@ Object.assign(T.en, { 'c.guia': 'Guide', 'c.guardia': 'Indigenous guard accompan
 Object.assign(T.fr, { 'c.guia': 'Guide', 'c.guardia': 'Garde autochtone accompagnateur' });
 Object.assign(T.pt, { 'c.guia': 'Guia', 'c.guardia': 'Guarda indígena que acompanha' });
 Object.assign(T.de, { 'c.guia': 'Führer', 'c.guardia': 'Indigene Wache als Begleitung' });
+
+/* Constancia pensada para celular: una columna, letra grande y QR grandes.
+   Se dibuja en dos pasadas: la primera mide la altura y la segunda dibuja. */
+function dibujarConstancia(rec, url){
+  const W = 640, M = 36, AZUL = '#1e4a7a', VERDE = '#7fbc4d', MUTED = '#5a6d7e', TEXTO = '#1a2e3a', BEIGE = '#f6f1e8';
+  const F = {
+    titulo: '800 30px system-ui, Arial', org: '700 17px system-ui, Arial', terr: '18px system-ui, Arial',
+    etq: '700 16px system-ui, Arial', val: '22px system-ui, Arial', valB: '700 22px system-ui, Arial',
+    mono: '700 34px ui-monospace, Consolas, monospace', monoP: '700 24px ui-monospace, Consolas, monospace',
+    nom: '700 22px system-ui, Arial', sub: '19px system-ui, Arial', txt: '20px system-ui, Arial',
+  };
+  const acomp = [
+    rec.guiaNombre ? [t('c.guia'), rec.guiaNombre] : null,
+    rec.guardia_nombre ? [t('c.guardia'), rec.guardia_nombre] : null,
+  ].filter(Boolean);
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = 10;
+  const c = cv.getContext('2d');
+  let y = 0, dibujar = false;
+  const medir = (s, font) => { c.font = font; return c.measureText(s).width; };
+  const txt = (s, x, yy, font, color, align = 'left') => {
+    if (!dibujar) return;
+    c.font = font; c.fillStyle = color; c.textAlign = align; c.fillText(s, x, yy); c.textAlign = 'left';
+  };
+  const wrap = (s, maxW, font) => {
+    const out = []; let cur = '';
+    for (const w of String(s ?? '').split(/\s+/)){
+      const tt = cur ? cur + ' ' + w : w;
+      if (medir(tt, font) <= maxW) cur = tt; else { if (cur) out.push(cur); cur = w; }
+    }
+    if (cur) out.push(cur);
+    return out;
+  };
+  const fit = (s, maxW, font) => {
+    s = String(s ?? ''); if (medir(s, font) <= maxW) return s;
+    while (s.length > 1 && medir(s + '…', font) > maxW) s = s.slice(0, -1);
+    return s + '…';
+  };
+  const campo = (etq, val, font = F.val) => {
+    txt(etq, M, y, F.etq, MUTED); y += 30;
+    wrap(val, W - 2 * M, font).forEach(l => { txt(l, M, y, font, TEXTO); y += 30; });
+    y += 12;
+  };
+  const layout = () => {
+    // Encabezado
+    const org = 40, tit0 = 92, lh = 40;
+    const tit = wrap(t('c.pdf.header'), W - 2 * M, F.titulo);
+    const yT = tit0 + (tit.length - 1) * lh + 38;
+    const encH = yT + 30;
+    if (dibujar){ const g = c.createLinearGradient(0, 0, W, encH); g.addColorStop(0, AZUL); g.addColorStop(1, '#3bb4e5'); c.fillStyle = g; c.fillRect(0, 0, W, encH); }
+    txt(CONFIG.organizacion.toUpperCase() + ' · NIT ' + CONFIG.nit, M, org, F.org, '#fff');
+    tit.forEach((l, i) => txt(l, M, tit0 + i * lh, F.titulo, '#fff'));
+    txt(fit(CONFIG.territorio, W - 2 * M, F.terr), M, yT, F.terr, '#fff');
+    y = encH + 36;
+
+    // Folio y código, grandes
+    txt(t('c.pdf.folio'), M, y, F.etq, MUTED); y += 40;
+    txt(rec.folio, M, y, F.mono, AZUL); y += 52;
+    txt(t('c.pdf.codigo'), M, y, F.etq, MUTED); y += 36;
+    txt(formatCodigo(rec.codigo), M, y, F.mono, AZUL); y += 50;
+
+    // Datos del ingreso, una columna
+    campo(t('c.pdf.fecha'), fmtFechaIso(rec.fechaIngreso));
+    campo(t('c.pdf.reg'), fmtFechaHora(rec.creado));
+    campo(t('c.pdf.tipo'), rec.tipo === 'grupo' ? t('c.tipoGrp', { n: rec.personas.length }) : t('c.tipoInd'));
+    campo(t('c.pdf.act'), rec.actividad || '—');
+
+    // Personas: una tarjeta por persona
+    y += 8;
+    txt(rec.tipo === 'grupo' ? t('c.integrantesReg') : t('c.personaReg'), M, y, F.valB, AZUL); y += 16;
+    rec.personas.forEach((p, i) => {
+      const alto = 84;
+      if (dibujar){ c.fillStyle = i % 2 === 0 ? BEIGE : '#ffffff'; c.fillRect(M, y, W - 2 * M, alto - 6); }
+      txt(String(i + 1), M + 14, y + 34, F.valB, AZUL);
+      txt(fit(p.nombre, W - 2 * M - 60, F.nom), M + 50, y + 34, F.nom, TEXTO);
+      txt(fit(`${p.docTipo} ${p.docNumero}  ·  ${p.telefono || ''}`, W - 2 * M - 60, F.sub), M + 50, y + 62, F.sub, MUTED);
+      y += alto;
+    });
+
+    // Guía y guardia que acompañan
+    if (acomp.length){
+      y += 26;
+      acomp.forEach(([etq, val]) => {
+        wrap(`${etq}: ${val}`, W - 2 * M, F.valB).forEach(l => { txt(l, M, y, F.valB, TEXTO); y += 30; });
+        y += 8;
+      });
+    }
+
+    // Instrucciones
+    y += 16;
+    [t('c.pdf.scan'), t('c.pdf.data')].forEach(l => {
+      wrap(l, W - 2 * M, F.txt).forEach(linea => { txt(linea, M, y, F.txt, TEXTO); y += 28; });
+      y += 8;
+    });
+
+    // QR de texto (sin internet), grande
+    y += 12;
+    const QT = 400, qx = (W - QT) / 2;
+    if (dibujar) dibujarQR(c, textoQR(rec, url), qx, y, QT);
+    y += QT + 12;
+    txt(t('c.pdf.qrTexto'), W / 2, y, F.etq, MUTED, 'center'); y += 46;
+
+    // QR de enlace (con internet)
+    const LT = 260, lx = (W - LT) / 2;
+    if (dibujar) dibujarQR(c, url, lx, y, LT);
+    y += LT + 12;
+    txt(t('c.pdf.qrWeb'), W / 2, y, F.etq, MUTED, 'center'); y += 26;
+    wrap(t('c.pdf.qrWebTxt'), W - 2 * M, F.txt).forEach(l => { txt(l, W / 2, y, F.txt, TEXTO, 'center'); y += 28; });
+
+    y += 24;
+    txt(t('c.pdf.code') + ' ' + formatCodigo(rec.codigo), W / 2, y, F.monoP, AZUL, 'center');
+    y += 30;
+    return y;
+  };
+
+  // Primera pasada: medir; segunda: dibujar
+  const alto = Math.ceil(layout()) + 30;
+  cv.height = alto;
+  c.fillStyle = '#ffffff'; c.fillRect(0, 0, W, alto);
+  dibujar = true; y = 0; layout();
+  c.fillStyle = VERDE; c.fillRect(0, alto - 12, W, 12);
+  return cv;
+}
 
 /* Constancia: dos códigos QR (sin internet: texto; con internet: enlace) */
 Object.assign(T.es, {
