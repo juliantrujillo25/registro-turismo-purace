@@ -72,6 +72,24 @@ dialog::backdrop{background:rgba(20,30,40,.5)}
   .solo-imprimir canvas{width:320px;height:320px}
 }
 </style>
+<style>
+.filtros{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.filtros button{border:1.5px solid var(--azul);background:#fff;color:var(--azul);border-radius:99px;padding:6px 12px;font-weight:700;font-size:13px;cursor:pointer}
+.filtros button[aria-pressed="true"]{background:var(--azul);color:#fff}
+.estado{display:inline-block;border-radius:99px;padding:2px 9px;font-size:12px;font-weight:700;background:#fff4e5;color:#7a4a00;white-space:nowrap}
+.estado.c{background:#e8f5fc;color:#124a68}
+.estado.h{background:#edf7e3;color:#2f5a12}
+.bloque{border-top:1px solid var(--linea);margin-top:14px;padding-top:12px}
+.bloque h3{margin:0 0 8px}
+.nota-p{font-size:13px;color:var(--muted);margin:4px 0 8px}
+.banner{border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:14px}
+.banner.prueba{background:#fff4e5;border:1px solid #f5d3a1;color:#7a4a00}
+.banner.ok{background:#edf7e3;border:1px solid #c5e3a4;color:#2f5a12}
+.login{max-width:420px;margin:30px auto}
+.login input{width:100%;margin-bottom:10px}
+.login .btn{width:100%}
+.oculto{display:none!important}
+</style>
 </head>
 <body>
 <header>
@@ -80,78 +98,93 @@ dialog::backdrop{background:rgba(20,30,40,.5)}
 </header>
 
 <main>
-  <!-- 1. IMPORTAR -->
-  <section class="card">
-    <h2>1. Importar registros recibidos</h2>
-    <p style="margin:0 0 10px;color:var(--muted)">Seleccione o arrastre aquí los archivos <b>.json</b> que llegan por WhatsApp (uno o varios a la vez). Los datos quedan guardados en este equipo.</p>
-    <div class="drop" id="drop">
-      <div><b>Arrastre aquí los archivos .json</b> o</div>
-      <div style="margin-top:8px"><button class="btn" id="btnElegir" type="button">Elegir archivos</button></div>
-      <input type="file" id="archivos" accept=".json,application/json" multiple hidden>
-    </div>
-    <div id="msgImp" class="msg" role="status"></div>
+  <div id="banner" class="banner prueba oculto"></div>
+
+  <!-- INICIO DE SESIÓN (solo con base compartida) -->
+  <section id="login" class="card login oculto">
+    <h2>Ingreso del operador del panel</h2>
+    <p class="nota-p">Use el correo y la clave que le asignó el Cabildo.</p>
+    <input type="email" id="loginCorreo" placeholder="Correo" autocomplete="username">
+    <input type="password" id="loginClave" placeholder="Clave" autocomplete="current-password">
+    <button class="btn" id="btnEntrar" type="button">Entrar</button>
+    <div id="msgLogin" class="msg" role="alert"></div>
   </section>
 
-  <!-- 2. RESUMEN -->
-  <section class="card">
-    <h2>2. Resumen</h2>
-    <div class="stats">
-      <div class="stat"><div class="n" id="stRegistros">0</div><div class="l">Constancias</div></div>
-      <div class="stat"><div class="n" id="stPersonas">0</div><div class="l">Personas</div></div>
-      <div class="stat"><div class="n" id="stGrupos">0</div><div class="l">Grupos</div></div>
-      <div class="stat"><div class="n" id="stIndividuales">0</div><div class="l">Individuales</div></div>
+  <div id="principal" class="oculto">
+    <div class="acciones" style="justify-content:flex-end;margin-bottom:10px">
+      <span id="actualizado" style="font-size:13px;color:var(--muted)"></span>
+      <button class="btn sec" id="btnActualizar" type="button">Actualizar</button>
+      <button class="btn sec oculto" id="btnSalir" type="button">Cerrar sesión</button>
     </div>
-    <h2 style="margin-top:18px">Ingresos por fecha</h2>
-    <div class="scroll" style="max-height:260px"><table class="tabla"><thead><tr><th>Fecha de ingreso</th><th>Constancias</th><th>Personas</th></tr></thead><tbody id="tbDias"></tbody></table></div>
-  </section>
 
-  <!-- 3. VERIFICAR -->
-  <section class="card">
-    <h2>3. Verificar una constancia</h2>
-    <p style="margin:0 0 10px;color:var(--muted)">Escriba el folio y el código de la constancia (o pegue el enlace del QR). Si el dispositivo lo permite, también puede escanear el QR con la cámara.</p>
-    <div class="acciones">
-      <input type="search" id="verEntrada" placeholder="Ej.: PC-261105-7K3F  A1B2 C3D4 E5F6" style="flex:1 1 320px">
-      <button class="btn" id="btnVerificar" type="button">Verificar</button>
-      <button class="btn sec" id="btnEscanear" type="button">Escanear QR</button>
-    </div>
-    <div class="visor" id="visor">
-      <video id="video" playsinline muted></video>
-      <div><button class="btn sec" id="btnCancelarScan" type="button" style="margin-top:8px">Cancelar escaneo</button></div>
-    </div>
-    <div id="resVer"></div>
-  </section>
+    <!-- 1. RESUMEN -->
+    <section class="card">
+      <h2>1. Resumen</h2>
+      <div class="stats">
+        <div class="stat"><div class="n" id="stRecibidos">0</div><div class="l">Recibidos (sin constancia)</div></div>
+        <div class="stat"><div class="n" id="stConstancia">0</div><div class="l">Con constancia</div></div>
+        <div class="stat"><div class="n" id="stHabilitados">0</div><div class="l">Habilitados</div></div>
+        <div class="stat"><div class="n" id="stPersonas">0</div><div class="l">Personas registradas</div></div>
+      </div>
+    </section>
 
-  <!-- 4. REGISTROS -->
-  <section class="card">
-    <div class="acciones" style="justify-content:space-between;margin-bottom:12px">
-      <h2 style="margin:0">4. Registros</h2>
+    <!-- 2. REGISTROS -->
+    <section class="card">
+      <h2>2. Registros de ingreso</h2>
+      <div class="filtros" role="group" aria-label="Filtrar">
+        <button type="button" data-filtro="todos" aria-pressed="true">Todos</button>
+        <button type="button" data-filtro="recibido" aria-pressed="false">Recibidos</button>
+        <button type="button" data-filtro="constancia" aria-pressed="false">Con constancia</button>
+        <button type="button" data-filtro="habilitado" aria-pressed="false">Habilitados</button>
+      </div>
+      <input type="search" id="buscar" placeholder="Buscar por folio, nombre, documento o teléfono…" style="width:100%;margin-bottom:10px">
+      <div class="scroll"><table class="tabla">
+        <thead><tr><th>Folio</th><th>Recibido</th><th>Tipo</th><th>Personas</th><th>Titular</th><th>Contacto</th><th>Estado</th></tr></thead>
+        <tbody id="tbRegistros"></tbody>
+      </table></div>
+      <p id="vacio" class="nota-p oculto">Aún no hay registros. Cuando los visitantes envíen su formulario, aparecerán aquí.</p>
+    </section>
+
+    <!-- 3. VERIFICAR -->
+    <section class="card">
+      <h2>3. Verificar una constancia</h2>
+      <p class="nota-p">Escriba el folio y el código de la constancia, o pegue el enlace del QR.</p>
+      <div class="acciones">
+        <input type="search" id="verEntrada" placeholder="Ej.: PC-261105-7K3F  A1B2 C3D4 E5F6" style="flex:1 1 320px">
+        <button class="btn" id="btnVerificar" type="button">Verificar</button>
+      </div>
+      <div id="resVer"></div>
+    </section>
+
+    <!-- 4. EXPORTAR E IMPORTAR -->
+    <section class="card">
+      <h2>4. Exportar e importar</h2>
       <div class="acciones">
         <button class="btn sec" id="btnCsvPersonas" type="button">Exportar personas (Excel/CSV)</button>
         <button class="btn sec" id="btnCsvConstancias" type="button">Exportar constancias (CSV)</button>
         <button class="btn sec" id="btnRespaldo" type="button">Respaldo completo (.json)</button>
-        <button class="btn peligro" id="btnBorrarTodo" type="button">Borrar todo</button>
       </div>
-    </div>
-    <input type="search" id="buscar" placeholder="Buscar por folio, nombre, documento o teléfono…" style="width:100%;margin-bottom:10px">
-    <div class="scroll"><table class="tabla">
-      <thead><tr><th>Folio</th><th>Fecha ingreso</th><th>Tipo</th><th>Personas</th><th>Responsable / titular</th><th>Teléfono</th></tr></thead>
-      <tbody id="tbRegistros"></tbody>
-    </table></div>
-    <p id="vacio" style="color:var(--muted)" class="hidden">Aún no hay registros. Importe los archivos .json del paso 1.</p>
-  </section>
+      <div class="drop" id="drop" style="margin-top:14px">
+        <div><b>Importar archivos .json</b> (copias que envió un visitante o respaldos anteriores)</div>
+        <div style="margin-top:8px"><button class="btn" id="btnElegir" type="button">Elegir archivos</button></div>
+        <input type="file" id="archivos" accept=".json,application/json" multiple hidden>
+      </div>
+      <div id="msgImp" class="msg" role="status"></div>
+    </section>
 
-  <!-- 5. QR PARA LA CARTELERA -->
-  <section class="card">
-    <h2>5. QR para la cartelera</h2>
-    <p style="margin:0 0 10px;color:var(--muted)">Pegue la dirección pública de la página de registro (la que abre el visitante). Luego imprima el QR y péguelo en la caseta.</p>
-    <div class="qrbox">
-      <div style="flex:1 1 320px">
-        <input type="url" id="urlForm" placeholder="https://…/Registro-Turismo-Purace.html">
-        <div class="acciones" style="margin-top:10px"><button class="btn" id="btnImprimirQR" type="button">Imprimir QR</button></div>
+    <!-- 5. QR PARA LA CARTELERA -->
+    <section class="card">
+      <h2>5. QR para la cartelera</h2>
+      <p class="nota-p">Imprima este QR y péguelo en la caseta. Abre la página de registro de los visitantes.</p>
+      <div class="qrbox">
+        <canvas id="qrCartel" width="200" height="200"></canvas>
+        <div style="flex:1 1 280px">
+          <div class="valor" id="urlCartel" style="word-break:break-all;font-size:14px"></div>
+          <div class="acciones"><button class="btn" id="btnImprimirQR" type="button">Imprimir QR</button></div>
+        </div>
       </div>
-      <canvas id="qrCartel" width="200" height="200"></canvas>
-    </div>
-  </section>
+    </section>
+  </div>
 </main>
 
 <!-- Detalle de un registro -->
@@ -159,8 +192,7 @@ dialog::backdrop{background:rgba(20,30,40,.5)}
   <div class="dlg-head"><b id="dlgTitulo">Registro</b><button class="btn sec" type="button" id="dlgCerrar">Cerrar</button></div>
   <div class="dlg-body" id="dlgCuerpo"></div>
   <div class="dlg-foot">
-    <button class="btn sec" type="button" id="dlgJson">Descargar este registro (.json)</button>
-    <button class="btn peligro" type="button" id="dlgBorrar">Eliminar este registro</button>
+    <button class="btn sec" type="button" id="dlgJson">Descargar datos (.json)</button>
   </div>
 </dialog>
 
@@ -173,338 +205,20 @@ dialog::backdrop{background:rgba(20,30,40,.5)}
 
 <script>
 /* ============================================================
-   CONFIGURACIÓN
+   CONFIGURACIÓN DEL PANEL
    ============================================================ */
 const CONFIG = {
   organizacion: "Cabildo Indígena de Puracé",
-  nit: "817.004.093-7"
+  resguardo: "Resguardo Indígena de Puracé",
+  nit: "817.004.093-7",
+  territorio: "Territorio Ancestral de la Comunidad Indígena de Puracé",
+  whatsapp: "573188215460",
+  // Dirección pública de la página del visitante (la que queda en el QR de la constancia y en la cartelera)
+  urlBase: "https://juliantrujillo25.github.io/registro-turismo-purace/",
+  supabaseUrl: "https://sncgfdhgzkoxndtybqqv.supabase.co",   // p. ej. "https://xxxx.supabase.co" (vacío = modo de prueba local)
+  supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNuY2dmZGhnemtveG5kdHlicXF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM5MzQ0NDQsImV4cCI6MjEwOTUxMDQ0NH0.V_bmjH2YzTvqIldUJGH0Km6XTu1SeQiOVJEAuWWGS94"    // clave PUBLICABLE (anon). Nunca la clave secreta.
 };
-
-/* ============================================================
-   UTILIDADES (mismas reglas que el formulario de registro)
-   ============================================================ */
-const $  = (s, r = document) => r.querySelector(s);
-const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function canon(v){
-  if (Array.isArray(v)) return '[' + v.map(canon).join(',') + ']';
-  if (v && typeof v === 'object') return '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}';
-  return JSON.stringify(v);
-}
-async function sha256Hex(texto){
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-const hashable = r => ({ folio: r.folio, creado: r.creado, tipo: r.tipo, fechaIngreso: r.fechaIngreso, actividad: r.actividad, lider: r.lider, personas: r.personas });
-const formatCodigo = c => c.match(/.{1,4}/g).join(' ');
-const fmtFecha = iso => { if (!iso) return '—'; const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; };
-const fmtFechaHora = iso => iso ? new Date(iso).toLocaleString('es-CO', {dateStyle:'medium', timeStyle:'short'}) : '—';
-const hoyISO = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
-const DOC_NOMBRE = { CC:'C.C.', TI:'T.I.', CE:'C.E.', PA:'Pasaporte', CI:'CI', DNI:'DNI' };
-
-function descargar(blob, nombre){
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = nombre;
-  document.body.appendChild(a); a.click();
-  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
-}
-function mostrar(el, tipo, html){ el.className = el.id === 'msgImp' ? 'msg ' + tipo : 'res ' + tipo; el.innerHTML = html; }
-
-/* ---------- QR ---------- */
-function matrizQR(texto){
-  const q = qrcode(0, 'M'); q.addData(texto); q.make();
-  const n = q.getModuleCount(), m = [];
-  for (let r = 0; r < n; r++){ const fila = []; for (let c = 0; c < n; c++) fila.push(q.isDark(r, c)); m.push(fila); }
-  return m;
-}
-function dibujarQR(ctx, texto, x, y, tam){
-  const m = matrizQR(texto), n = m.length, zona = 2;
-  const celda = Math.floor(tam / (n + zona * 2)), total = celda * (n + zona * 2);
-  ctx.fillStyle = '#fff'; ctx.fillRect(x, y, total, total);
-  ctx.fillStyle = '#1a2e3a';
-  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++)
-    if (m[r][c]) ctx.fillRect(x + (c + zona) * celda, y + (r + zona) * celda, celda, celda);
-  return total;
-}
-function pintarQR(canvas, texto){
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  if (!texto) return;
-  try { dibujarQR(ctx, texto, 0, 0, canvas.width); } catch (e) { ctx.clearRect(0, 0, canvas.width, canvas.height); }
-}
-
-/* ============================================================
-   BASE DE DATOS LOCAL (IndexedDB, en este equipo)
-   ============================================================ */
-let dbPromesa = null;
-function abrirDB(){
-  return dbPromesa || (dbPromesa = new Promise((res, rej) => {
-    const r = indexedDB.open('registro-cabildo', 1);
-    r.onupgradeneeded = () => r.result.createObjectStore('registros', { keyPath: 'folio' });
-    r.onsuccess = () => res(r.result);
-    r.onerror = () => rej(r.error);
-  }));
-}
-async function tx(modo, fn){
-  const db = await abrirDB();
-  return new Promise((res, rej) => {
-    const t = db.transaction('registros', modo);
-    const peticion = fn(t.objectStore('registros'));
-    t.oncomplete = () => res(peticion.result);
-    t.onerror = () => rej(t.error);
-    t.onabort = () => rej(t.error);
-  });
-}
-const dbTodos   = () => tx('readonly',  st => st.getAll());
-const dbLeer    = f  => tx('readonly',  st => st.get(f));
-const dbGuardar = r  => tx('readwrite', st => st.put(r));
-const dbBorrar  = f  => tx('readwrite', st => st.delete(f));
-const dbVaciar  = () => tx('readwrite', st => st.clear());
-
-let registros = [];   // registros verificados, en memoria
-
-/* ============================================================
-   VERIFICACIÓN DE INTEGRIDAD
-   ============================================================ */
-async function verificarRegistro(r){
-  if (!r || r.formato !== 'registro-ingreso-purace') return { estado: 'invalido', motivo: 'no es un registro de ingreso' };
-  if (!/^PC-\d{6}-[A-Z2-9]{4}$/.test(r.folio || '')) return { estado: 'invalido', motivo: 'folio no válido' };
-  if (!Array.isArray(r.personas) || !r.personas.length) return { estado: 'invalido', motivo: 'sin personas registradas' };
-  const codigo = (await sha256Hex(canon(hashable(r)))).slice(0, 12).toUpperCase();
-  if (codigo !== r.codigo) return { estado: 'alterado', motivo: 'el contenido no coincide con su código de verificación' };
-  return { estado: 'ok', codigo };
-}
-
-/* ============================================================
-   IMPORTAR
-   ============================================================ */
-async function importarArchivos(lista){
-  const out = { nuevos: 0, actualizados: 0, alterados: [], invalidos: [] };
-  for (const f of lista){
-    let data;
-    try { data = JSON.parse(await f.text()); }
-    catch { out.invalidos.push(`${f.name}: no es un archivo JSON válido`); continue; }
-    const items = Array.isArray(data) ? data : (Array.isArray(data.registros) ? data.registros : [data]);
-    for (const r of items){
-      const v = await verificarRegistro(r);
-      if (v.estado === 'ok'){
-        const ya = await dbLeer(r.folio);
-        await dbGuardar(r);
-        ya ? out.actualizados++ : out.nuevos++;
-      } else if (v.estado === 'alterado') out.alterados.push(`${r.folio || f.name} (${f.name})`);
-      else out.invalidos.push(`${f.name}: ${v.motivo}`);
-    }
-  }
-  await cargar();
-  const partes = [`<b>${out.nuevos}</b> nuevo(s)`, `<b>${out.actualizados}</b> ya existían (se actualizaron)`];
-  let html = 'Importación terminada: ' + partes.join(' · ') + '.';
-  if (out.alterados.length) html += `<br><b>No se guardaron (contenido alterado):</b> ${out.alterados.map(esc).join(', ')}.`;
-  if (out.invalidos.length) html += `<br><b>No se guardaron (formato no válido):</b> ${out.invalidos.map(esc).join(' · ')}.`;
-  mostrar($('#msgImp'), out.alterados.length || out.invalidos.length ? 'err' : 'ok', html);
-  $('#msgImp').className = (out.alterados.length || out.invalidos.length ? 'msg err' : 'msg ok');
-}
-
-/* ============================================================
-   RESUMEN Y LISTA
-   ============================================================ */
-async function cargar(){
-  registros = (await dbTodos()).sort((a, b) => (b.creado || '').localeCompare(a.creado || ''));
-  pintarResumen(); pintarLista();
-}
-function pintarResumen(){
-  const personas = registros.reduce((a, r) => a + r.personas.length, 0);
-  const grupos = registros.filter(r => r.tipo === 'grupo').length;
-  $('#stRegistros').textContent = registros.length;
-  $('#stPersonas').textContent = personas;
-  $('#stGrupos').textContent = grupos;
-  $('#stIndividuales').textContent = registros.length - grupos;
-  const dias = {};
-  registros.forEach(r => { const k = r.fechaIngreso || '—'; dias[k] = dias[k] || { regs: 0, pers: 0 }; dias[k].regs++; dias[k].pers += r.personas.length; });
-  const filas = Object.keys(dias).sort().reverse().map(k => `<tr><td>${fmtFecha(k)}</td><td>${dias[k].regs}</td><td>${dias[k].pers}</td></tr>`);
-  $('#tbDias').innerHTML = filas.join('') || '<tr><td colspan="3" style="color:var(--muted)">Sin datos todavía</td></tr>';
-}
-function textoBusqueda(r){
-  return [r.folio, r.codigo, r.actividad, r.lider?.nombre, r.lider?.telefono, ...r.personas.flatMap(p => [p.nombre, p.docNumero, p.telefono, p.emTelefono])].join(' ').toLowerCase();
-}
-function pintarLista(){
-  const q = $('#buscar').value.trim().toLowerCase();
-  const visibles = registros.filter(r => !q || textoBusqueda(r).includes(q));
-  $('#vacio').classList.toggle('hidden', registros.length > 0);
-  $('#tbRegistros').innerHTML = visibles.map(r => {
-    const titular = r.tipo === 'grupo' ? (r.lider?.nombre || 'Grupo') : r.personas[0].nombre;
-    const tel = r.tipo === 'grupo' ? (r.lider?.telefono || '') : r.personas[0].telefono;
-    return `<tr class="fila" data-folio="${esc(r.folio)}">
-      <td class="folio">${esc(r.folio)}</td><td>${fmtFecha(r.fechaIngreso)}</td>
-      <td><span class="badge ${r.tipo === 'grupo' ? 'g' : ''}">${r.tipo === 'grupo' ? 'Grupo' : 'Individual'}</span></td>
-      <td>${r.personas.length}</td><td>${esc(titular)}</td><td>${esc(tel)}</td></tr>`;
-  }).join('') || (registros.length ? '<tr><td colspan="6" style="color:var(--muted)">Ningún registro coincide con la búsqueda.</td></tr>' : '');
-}
-
-/* ============================================================
-   DETALLE
-   ============================================================ */
-function abrirDetalle(folio){
-  const r = registros.find(x => x.folio === folio);
-  if (!r) return;
-  $('#dlgTitulo').textContent = `${r.folio} · ${r.tipo === 'grupo' ? 'Grupo' : 'Individual'}`;
-  $('#dlgCuerpo').innerHTML = `
-    <div class="grid2" style="margin-bottom:14px">
-      <div><div class="dato">Código de verificación</div><div class="codigo">${formatCodigo(r.codigo)}</div></div>
-      <div><div class="dato">Fecha de ingreso</div>${fmtFecha(r.fechaIngreso)}</div>
-      <div><div class="dato">Registrado</div>${fmtFechaHora(r.creado)}</div>
-      <div><div class="dato">Actividad o sitio</div>${esc(r.actividad) || '—'}</div>
-      ${r.lider ? `<div class="full" style="grid-column:1/-1"><div class="dato">Responsable del grupo</div>${esc(r.lider.nombre)} · ${esc(r.lider.telefono)}</div>` : ''}
-    </div>
-    <div class="scroll" style="max-height:none"><table class="tabla">
-      <thead><tr><th>#</th><th>Nombre</th><th>Documento</th><th>Edad</th><th>Teléfono</th><th>Emergencia</th><th>Salud / observaciones</th><th>Firma</th></tr></thead>
-      <tbody>${r.personas.map((p, i) => `<tr>
-        <td>${i + 1}</td><td><b>${esc(p.nombre)}</b><div class="dato" style="text-transform:none">${esc(p.residencia)}</div></td>
-        <td>${esc(DOC_NOMBRE[p.docTipo] || p.docTipo)} ${esc(p.docNumero)}</td><td>${esc(p.edad)}</td>
-        <td>${esc(p.telefono)}</td><td>${esc(p.emNombre)}<br>${esc(p.emTelefono)}</td>
-        <td>${esc(p.salud) || '—'}</td>
-        <td>${p.firma ? `<img class="firma-img" src="${p.firma}" alt="Firma">` : '—'}</td></tr>`).join('')}
-      </tbody></table></div>`;
-  $('#dlg').dataset.folio = folio;
-  $('#dlg').showModal();
-}
-
-/* ============================================================
-   VERIFICAR
-   ============================================================ */
-async function verificarEntrada(texto){
-  const res = $('#resVer');
-  const m = /PC-\d{6}-[A-Z2-9]{4}/i.exec(texto || '');
-  if (!m){ mostrar(res, 'err', 'No se reconoce el folio. Debe tener la forma <b>PC-AAMMDD-XXXX</b>.'); return; }
-  const folio = m[0].toUpperCase();
-  const resto = texto.slice(m.index + m[0].length).replace(/\s/g, '');
-  const cod = ((resto.match(/[0-9A-Fa-f]{12}/) || [])[0] || '').toUpperCase();
-  const r = await dbLeer(folio);
-  if (!r){
-    mostrar(res, 'err', `El folio <b class="folio">${esc(folio)}</b> no está en los registros de este equipo. Importe los archivos de esa constancia (paso 1) y repita la verificación.`);
-    return;
-  }
-  const v = await verificarRegistro(r);
-  if (v.estado !== 'ok'){ mostrar(res, 'err', `El registro guardado está alterado: ${esc(v.motivo)}. No se acepte esta constancia.`); return; }
-  const titular = r.tipo === 'grupo' ? `Grupo de ${r.personas.length} persona(s) · responsable ${esc(r.lider?.nombre)}` : `${esc(r.personas[0].nombre)} · ${esc(DOC_NOMBRE[r.personas[0].docTipo] || r.personas[0].docTipo)} ${esc(r.personas[0].docNumero)}`;
-  const detalle = `<div style="margin-top:6px">${titular}<br>Fecha de ingreso: ${fmtFecha(r.fechaIngreso)} · Registrado: ${fmtFechaHora(r.creado)}</div>`;
-  if (!cod){
-    mostrar(res, 'info', `Registro encontrado: <b class="folio">${esc(folio)}</b>. Falta el código: compárelo con el de la constancia.${detalle}`);
-  } else if (cod === r.codigo){
-    mostrar(res, 'ok', `<b>✔ Verificada.</b> La constancia <b class="folio">${esc(folio)}</b> coincide con el registro.${detalle}`);
-  } else {
-    mostrar(res, 'err', `<b>✘ No coincide.</b> El código de la constancia no corresponde al registro <b class="folio">${esc(folio)}</b>.`);
-  }
-  $('#verEntrada').value = folio;
-}
-
-let detenerEscaneo = null;
-async function escanear(){
-  const res = $('#resVer');
-  if (!('BarcodeDetector' in window)){
-    mostrar(res, 'info', 'Este navegador no permite leer QR con la cámara. Escriba el folio o pegue el texto del QR en el cuadro.');
-    return;
-  }
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-    const video = $('#video'); video.srcObject = stream; await video.play();
-    $('#visor').style.display = 'block';
-    const det = new BarcodeDetector({ formats: ['qr_code'] });
-    const timer = setInterval(async () => {
-      try {
-        const codigos = await det.detect(video);
-        if (codigos.length){ parar(); $('#verEntrada').value = codigos[0].rawValue; verificarEntrada(codigos[0].rawValue); }
-      } catch (e) {}
-    }, 350);
-    const parar = () => { clearInterval(timer); stream.getTracks().forEach(t => t.stop()); $('#visor').style.display = 'none'; };
-    detenerEscaneo = parar;
-  } catch (e) {
-    mostrar(res, 'err', 'No se pudo abrir la cámara (' + esc(e.message) + '). Escriba el folio manualmente.');
-  }
-}
-
-/* ============================================================
-   EXPORTAR
-   ============================================================ */
-const csvCelda = v => { const s = v == null ? '' : String(v); return /[";\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-const csvTexto = filas => '﻿' + filas.map(f => f.map(csvCelda).join(';')).join('\r\n');
-
-function exportarPersonas(){
-  const filas = [['Folio','Creado','Fecha ingreso','Tipo','Actividad','Responsable grupo','Tel. responsable','N°','Nombre','Tipo documento','Número documento','Edad','Teléfono','Residencia','Contacto emergencia','Tel. emergencia','Salud / observaciones','Código verificación']];
-  registros.forEach(r => r.personas.forEach((p, i) => filas.push([
-    r.folio, fmtFechaHora(r.creado), fmtFecha(r.fechaIngreso), r.tipo === 'grupo' ? 'Grupo' : 'Individual', r.actividad || '',
-    r.lider?.nombre || '', r.lider?.telefono || '', i + 1, p.nombre, DOC_NOMBRE[p.docTipo] || p.docTipo, p.docNumero, p.edad,
-    p.telefono, p.residencia || '', p.emNombre, p.emTelefono, p.salud || '', formatCodigo(r.codigo)
-  ])));
-  descargar(new Blob([csvTexto(filas)], { type: 'text/csv;charset=utf-8' }), `Consolidado-personas-${hoyISO()}.csv`);
-}
-function exportarConstancias(){
-  const filas = [['Folio','Creado','Fecha ingreso','Tipo','Actividad','Nº personas','Responsable / titular','Teléfono','Código verificación']];
-  registros.forEach(r => filas.push([
-    r.folio, fmtFechaHora(r.creado), fmtFecha(r.fechaIngreso), r.tipo === 'grupo' ? 'Grupo' : 'Individual', r.actividad || '',
-    r.personas.length, r.tipo === 'grupo' ? (r.lider?.nombre || '') : r.personas[0].nombre,
-    r.tipo === 'grupo' ? (r.lider?.telefono || '') : r.personas[0].telefono, formatCodigo(r.codigo)
-  ]));
-  descargar(new Blob([csvTexto(filas)], { type: 'text/csv;charset=utf-8' }), `Consolidado-constancias-${hoyISO()}.csv`);
-}
-function exportarRespaldo(){
-  const data = { formato: 'respaldo-registros-purace', exportado: new Date().toISOString(), organizacion: CONFIG.organizacion, total: registros.length, registros };
-  descargar(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), `Respaldo-registros-${hoyISO()}.json`);
-}
-
-/* ============================================================
-   EVENTOS
-   ============================================================ */
-function init(){
-  $('#org').textContent = CONFIG.organizacion + ' · NIT ' + CONFIG.nit;
-
-  const input = $('#archivos'), drop = $('#drop');
-  $('#btnElegir').onclick = () => input.click();
-  input.onchange = () => { if (input.files.length) importarArchivos(Array.from(input.files)); input.value = ''; };
-  ['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
-  ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
-  drop.addEventListener('drop', e => { const fs = Array.from(e.dataTransfer.files); if (fs.length) importarArchivos(fs); });
-
-  $('#btnVerificar').onclick = () => verificarEntrada($('#verEntrada').value);
-  $('#verEntrada').addEventListener('keydown', e => { if (e.key === 'Enter') verificarEntrada($('#verEntrada').value); });
-  $('#btnEscanear').onclick = escanear;
-  $('#btnCancelarScan').onclick = () => { if (detenerEscaneo) detenerEscaneo(); };
-
-  $('#buscar').addEventListener('input', pintarLista);
-  $('#tbRegistros').addEventListener('click', e => { const tr = e.target.closest('tr[data-folio]'); if (tr) abrirDetalle(tr.dataset.folio); });
-  $('#dlgCerrar').onclick = () => $('#dlg').close();
-  $('#dlgJson').onclick = () => {
-    const r = registros.find(x => x.folio === $('#dlg').dataset.folio);
-    if (r) descargar(new Blob([JSON.stringify(r, null, 2)], { type: 'application/json' }), `${r.folio}.json`);
-  };
-  $('#dlgBorrar').onclick = async () => {
-    const f = $('#dlg').dataset.folio;
-    if (!confirm(`¿Eliminar del registro de este equipo la constancia ${f}? Esta acción no se puede deshacer.`)) return;
-    await dbBorrar(f); $('#dlg').close(); await cargar();
-  };
-
-  $('#btnCsvPersonas').onclick = exportarPersonas;
-  $('#btnCsvConstancias').onclick = exportarConstancias;
-  $('#btnRespaldo').onclick = exportarRespaldo;
-  $('#btnBorrarTodo').onclick = async () => {
-    if (!registros.length) return;
-    if (!confirm(`Se borrarán ${registros.length} constancia(s) de este equipo. Antes, exporte un respaldo. ¿Continuar?`)) return;
-    await dbVaciar(); await cargar();
-  };
-
-  const urlInput = $('#urlForm');
-  urlInput.value = '';
-  urlInput.addEventListener('input', () => pintarQR($('#qrCartel'), urlInput.value.trim()));
-  $('#btnImprimirQR').onclick = () => {
-    const u = urlInput.value.trim();
-    if (!u){ alert('Primero pegue la dirección pública del formulario de registro.'); return; }
-    pintarQR($('#qrImpresion'), u); window.print();
-  };
-
-  cargar().catch(e => mostrar($('#msgImp'), 'err', 'No se pudo abrir la base de datos local: ' + esc(e.message)));
-}
-document.addEventListener('DOMContentLoaded', init);
 </script>
-
 <script>
 //---------------------------------------------------------------------
 //
@@ -2804,6 +2518,892 @@ var qrcode = function() {
     return qrcode;
 }));
 
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+/* ============================================================
+   COMPARTIDO: textos, código de verificación, almacén y constancia
+   ============================================================ */
+let lang = 'es';
+const IDIOMAS = ['es', 'en', 'fr', 'pt', 'de'];
+const LOCALES = { es: 'es-CO', en: 'en-GB', fr: 'fr-FR', pt: 'pt-BR', de: 'de-DE' };
+const DOC_CODES = ['CC', 'TI', 'CE', 'PA', 'CI', 'DNI'];
+
+const T = {
+  es: {
+    docTitle: 'Registro de ingreso · Territorio Ancestral Puracé',
+    'title.reg': 'Registro de ingreso al Territorio Ancestral',
+    'title.const': 'Constancia de registro',
+    'title.verif': 'Verificación de constancia',
+    'seg.ind': 'Individual', 'seg.grp': 'Grupo',
+    'sec.datos': 'Datos del ingreso', 'f.fecha': 'Fecha de ingreso *', 'f.actividad': 'Actividad o sitio a visitar', 'f.actividadPh': 'Ej.: Termales de San Juan',
+    'sec.lider': 'Persona responsable del grupo', 'f.liderNombre': 'Nombre *', 'f.liderTel': 'Teléfono *',
+    'btn.agregar': '+ Agregar integrante', 'sec.acta': 'Acta de corresponsabilidad',
+    leg1: 'Expreso mi libre deseo de ingresar y disfrutar las actividades y servicios turísticos habilitados dentro del Territorio Ancestral de la Comunidad Indígena de Puracé. He leído y escuchado las disposiciones, recomendaciones y orientaciones dadas por el Comité de Turismo, orientadores turísticos, chagleros y guías antes y durante los recorridos.',
+    leg2: 'Descarto enfermedades como cardiopatías, problemas respiratorios o presión arterial, no tengo fracturas o lesiones previas, no estoy bajo efectos del alcohol ni de sustancias psicoactivas, y mi estado de salud es el adecuado para la actividad turística.',
+    leg3: 'Me comprometo a acatar con responsabilidad las disposiciones y orientaciones, y asumo los daños, gastos, lesiones o enfermedades que por el carácter de la(s) actividad(es) pueda generarme.',
+    leg4: 'Por la actividad de la Cadena Volcánica Los Kokonucos (Alerta Amarilla) y los cambios en los sitios turísticos, acato de manera obligatoria las recomendaciones del Cabildo Indígena de Puracé, el Comité de Turismo, los chagleros, orientadores, guías y demás personal.',
+    leg5: 'Autorizo a las Autoridades Tradicionales, al Comité de Turismo, orientadores, chagleros y guías para informar a mi contacto de emergencia sobre cualquier eventualidad que me ocurra.',
+    leg6: 'La versión en español de esta acta es el texto oficial.',
+    acepto: 'Leí y acepto el acta. Cada persona registrada firma en su propio recuadro.',
+    'btn.generar': 'Generar constancia', 'msg.generando': 'Generando…',
+    'p.titulo': 'Datos de la persona', 'p.integrante': 'Integrante {n}', 'p.quitar': 'Quitar', 'p.borrarFirma': 'Borrar firma', 'p.firma': 'Firma *',
+    'f.nombre': 'Nombre completo *', 'f.docTipo': 'Tipo de documento *', 'f.docNumero': 'Número de documento *', 'f.edad': 'Edad *',
+    'f.telefono': 'Teléfono de contacto *', 'f.residencia': 'Lugar de residencia / dirección', 'f.emNombre': 'Contacto de emergencia (nombre) *',
+    'f.emTelefono': 'Contacto de emergencia (teléfono) *', 'f.salud': 'Condiciones de salud, alergias u observaciones',
+    'doc.CC': 'CC – Cédula de ciudadanía', 'doc.TI': 'TI – Tarjeta de identidad', 'doc.CE': 'CE – Cédula de extranjería', 'doc.PA': 'PA – Pasaporte', 'doc.CI': 'CI – Otro documento', 'doc.DNI': 'DNI – Documento extranjero',
+    'err.prefix': 'Revise: ', 'err.member': 'Integrante {n}: ', 'err.fecha': 'Indique la fecha de ingreso.', 'err.liderNombre': 'Nombre de la persona responsable del grupo.',
+    'err.liderTel': 'Teléfono del responsable no válido.', 'err.nombre': 'escriba el nombre completo.', 'err.docNumero': 'número de documento no válido.',
+    'err.edad': 'edad no válida.', 'err.telefono': 'teléfono no válido.', 'err.emNombre': 'nombre del contacto de emergencia.',
+    'err.emTelefono': 'teléfono del contacto de emergencia no válido.', 'err.firma': 'falta la firma.', 'err.acepto': 'Debe leer y aceptar el acta.',
+    'err.fail': 'No fue posible generar la constancia: {e}. Intente de nuevo.',
+    'c.titulo': 'Constancia de registro', 'c.registrado': 'Registrado', 'c.fechaIngreso': 'Fecha de ingreso', 'c.tipo': 'Tipo',
+    'c.tipoInd': 'Individual', 'c.tipoGrp': 'Grupo de {n} persona(s)', 'c.actividad': 'Actividad o sitio', 'c.codigo': 'Código de verificación',
+    'c.qrhelp': 'Escanee este QR con la cámara del celular para verificar la constancia.',
+    'c.nota': 'Envíe al Cabildo el archivo .json (es el que se consolida en el panel) y la imagen de la constancia. Guarde la imagen en su celular como comprobante.',
+    'c.personaReg': 'Persona registrada', 'c.integrantesReg': 'Integrantes registrados',
+    'c.th.num': '#', 'c.th.nombre': 'Nombre', 'c.th.doc': 'Documento', 'c.th.tel': 'Teléfono',
+    'c.pdf.header': 'Constancia de registro de ingreso', 'c.pdf.folio': 'FOLIO', 'c.pdf.codigo': 'CÓDIGO DE VERIFICACIÓN',
+    'c.pdf.fecha': 'FECHA DE INGRESO', 'c.pdf.reg': 'REGISTRADO', 'c.pdf.tipo': 'TIPO', 'c.pdf.act': 'ACTIVIDAD O SITIO',
+    'c.pdf.scan': 'Escanee el código QR con la cámara del celular para verificar esta constancia.',
+    'c.pdf.data': 'Los datos completos quedan en el registro del Cabildo y solo se consultan para verificación.', 'c.pdf.code': 'Código:',
+    'btn.wa': 'Enviar por WhatsApp (constancia + datos)', 'btn.png': 'Descargar constancia (imagen)', 'btn.json': 'Descargar datos del registro (.json)', 'btn.nuevo': 'Registrar otra persona',
+    'aviso.file': 'Esta página se abrió desde un archivo del computador. Para que el código QR funcione desde otros celulares, publique esta página en internet (ver LEEME).',
+    'share.text': 'Constancia de registro {folio}. Adjunto la constancia y los datos del registro para el Cabildo.',
+    'share.ok': 'Constancia compartida.',
+    'share.dl': 'Se descargaron 2 archivos. En WhatsApp use el clip 📎, adjúntelos al mensaje que se abrió y envíelo.',
+    'v.folio': 'Folio', 'v.fecha': 'Fecha de registro', 'v.codigo': 'Código de verificación', 'v.btn': 'Registrar una persona',
+    'v.p1': 'Esta constancia corresponde a un registro de ingreso al Territorio Ancestral de la Comunidad Indígena de Puracé.',
+    'v.p2': 'Para confirmar que los datos de la constancia coinciden con el registro del Cabildo, ingrese el folio y el código en el Panel del Cabildo.',
+    'v.invalid': 'El código QR no corresponde a una constancia válida.'
+  },
+  en: {
+    docTitle: 'Entry registration · Ancestral Territory Puracé',
+    'title.reg': 'Entry registration – Ancestral Territory',
+    'title.const': 'Registration certificate',
+    'title.verif': 'Certificate verification',
+    'seg.ind': 'Individual', 'seg.grp': 'Group',
+    'sec.datos': 'Entry details', 'f.fecha': 'Date of entry *', 'f.actividad': 'Activity or place to visit', 'f.actividadPh': 'E.g.: San Juan Hot Springs',
+    'sec.lider': 'Person in charge of the group', 'f.liderNombre': 'Name *', 'f.liderTel': 'Phone *',
+    'btn.agregar': '+ Add member', 'sec.acta': 'Accountability agreement',
+    leg1: 'I freely express my wish to enter and enjoy the tourist activities and services enabled within the Ancestral Territory of the Indigenous Community of Puracé. I have read and carefully listened to the provisions, recommendations and guidance given by the Tourism Committee, tourist guides, chagleros and local guides before and during the tours.',
+    leg2: 'I rule out illnesses such as heart disease, respiratory problems or high blood pressure, I have no previous fractures or injuries, I am not under the influence of alcohol or psychoactive substances, and my state of health is suitable for the tourist activity.',
+    leg3: 'I undertake to comply responsibly with the provisions and guidance, and I assume the damages, expenses, injuries or illnesses that the nature of the tourist activity(ies) may cause me.',
+    leg4: 'Due to the activity of the Los Kokonucos Volcanic Chain (Yellow Alert) and changes at tourist sites, I shall mandatorily follow the recommendations of the Cabildo Indígena de Puracé, the Tourism Committee, the chagleros, guides and all other personnel.',
+    leg5: 'I authorize the Traditional Authorities, the Tourism Committee, guides, chagleros and local guides to inform my emergency contact about any incident that may happen to me.',
+    leg6: 'The Spanish version of this agreement is the official text.',
+    acepto: 'I have read and accept the agreement. Each registered person signs in their own box.',
+    'btn.generar': 'Generate certificate', 'msg.generando': 'Generating…',
+    'p.titulo': 'Person details', 'p.integrante': 'Member {n}', 'p.quitar': 'Remove', 'p.borrarFirma': 'Clear signature', 'p.firma': 'Signature *',
+    'f.nombre': 'Full name *', 'f.docTipo': 'Document type *', 'f.docNumero': 'Document number *', 'f.edad': 'Age *',
+    'f.telefono': 'Contact phone *', 'f.residencia': 'Place of residence / address', 'f.emNombre': 'Emergency contact (name) *',
+    'f.emTelefono': 'Emergency contact (phone) *', 'f.salud': 'Health conditions, allergies or notes',
+    'doc.CC': 'CC – Colombian citizenship ID', 'doc.TI': 'TI – Minor\'s identity card', 'doc.CE': 'CE – Foreigner ID', 'doc.PA': 'PA – Passport', 'doc.CI': 'CI – Other document', 'doc.DNI': 'DNI – Foreign national ID',
+    'err.prefix': 'Please check: ', 'err.member': 'Member {n}: ', 'err.fecha': 'Enter the date of entry.', 'err.liderNombre': 'Enter the name of the person in charge of the group.',
+    'err.liderTel': 'The phone number of the person in charge is not valid.', 'err.nombre': 'enter the full name.', 'err.docNumero': 'document number is not valid.',
+    'err.edad': 'age is not valid.', 'err.telefono': 'phone number is not valid.', 'err.emNombre': 'enter the emergency contact\'s name.',
+    'err.emTelefono': 'emergency contact phone number is not valid.', 'err.firma': 'signature is missing.', 'err.acepto': 'You must read and accept the agreement.',
+    'err.fail': 'The certificate could not be generated: {e}. Please try again.',
+    'c.titulo': 'Registration certificate', 'c.registrado': 'Registered', 'c.fechaIngreso': 'Date of entry', 'c.tipo': 'Type',
+    'c.tipoInd': 'Individual', 'c.tipoGrp': 'Group of {n} person(s)', 'c.actividad': 'Activity or place', 'c.codigo': 'Verification code',
+    'c.qrhelp': 'Scan this QR code with your phone camera to verify this certificate.',
+    'c.nota': 'Send the Cabildo the .json file (it is consolidated in the panel) and the certificate image. Save the image on your phone as proof.',
+    'c.personaReg': 'Registered person', 'c.integrantesReg': 'Registered members',
+    'c.th.num': '#', 'c.th.nombre': 'Name', 'c.th.doc': 'Document', 'c.th.tel': 'Phone',
+    'c.pdf.header': 'Entry registration certificate', 'c.pdf.folio': 'FOLIO', 'c.pdf.codigo': 'VERIFICATION CODE',
+    'c.pdf.fecha': 'DATE OF ENTRY', 'c.pdf.reg': 'REGISTERED', 'c.pdf.tipo': 'TYPE', 'c.pdf.act': 'ACTIVITY OR PLACE',
+    'c.pdf.scan': 'Scan the QR code with your phone camera to verify this certificate.',
+    'c.pdf.data': 'The full data remain in the Cabildo\'s registry and are only consulted for verification.', 'c.pdf.code': 'Code:',
+    'btn.wa': 'Send by WhatsApp (certificate + data)', 'btn.png': 'Download certificate (image)', 'btn.json': 'Download registration data (.json)', 'btn.nuevo': 'Register another person',
+    'aviso.file': 'This page was opened from a file on the computer. For the QR code to work on other phones, publish this page on the internet (see README).',
+    'share.text': 'Entry registration certificate {folio}. Attached: the certificate and the registration data for the Cabildo.',
+    'share.ok': 'Certificate shared.',
+    'share.dl': '2 files were downloaded. In WhatsApp, tap the 📎 clip, attach them to the message that opened and send it.',
+    'v.folio': 'Folio', 'v.fecha': 'Registration date', 'v.codigo': 'Verification code', 'v.btn': 'Register a person',
+    'v.p1': 'This certificate corresponds to an entry registration for the Ancestral Territory of the Indigenous Community of Puracé.',
+    'v.p2': 'To confirm that the certificate data match the Cabildo\'s registry, enter the folio and the code in the Cabildo Panel.',
+    'v.invalid': 'This QR code does not correspond to a valid certificate.'
+  },
+  fr: {
+    docTitle: 'Enregistrement d\'entrée · Territoire ancestral Puracé',
+    'title.reg': 'Enregistrement d\'entrée – Territoire ancestral',
+    'title.const': 'Attestation d\'enregistrement',
+    'title.verif': 'Vérification de l\'attestation',
+    'seg.ind': 'Individuel', 'seg.grp': 'Groupe',
+    'sec.datos': 'Détails de l\'entrée', 'f.fecha': 'Date d\'entrée *', 'f.actividad': 'Activité ou lieu à visiter', 'f.actividadPh': 'Ex. : Sources thermales de San Juan',
+    'sec.lider': 'Responsable du groupe', 'f.liderNombre': 'Nom *', 'f.liderTel': 'Téléphone *',
+    'btn.agregar': '+ Ajouter un membre', 'sec.acta': 'Acte de responsabilité',
+    leg1: 'J\'exprime librement mon souhait d\'entrer et de profiter des activités et services touristiques autorisés sur le Territoire ancestral de la Communauté indigène de Puracé. J\'ai lu et écouté attentivement les dispositions, recommandations et orientations données par le Comité du tourisme, les orientateurs touristiques, les chagleros et les guides avant et pendant les parcours.',
+    leg2: 'Je déclare ne pas souffrir de maladies telles que cardiopathies, problèmes respiratoires ou hypertension, je n\'ai pas de fractures ni de lésions antérieures, je ne suis pas sous l\'effet de l\'alcool ni de substances psychoactives, et mon état de santé est adapté à l\'activité touristique.',
+    leg3: 'Je m\'engage à respecter avec responsabilité les dispositions et orientations, et j\'assume les dommages, frais, blessures ou maladies que la nature de la ou des activité(s) touristique(s) pourrait me causer.',
+    leg4: 'En raison de l\'activité de la chaîne volcanique Los Kokonucos (Alerte jaune) et des changements sur les sites touristiques, je suivrai obligatoirement les recommandations du Cabildo indígena de Puracé, du Comité du tourisme, des chagleros, des guides et du personnel.',
+    leg5: 'J\'autorise les Autorités traditionnelles, le Comité du tourisme, les orientateurs, les chagleros et les guides à informer mon contact d\'urgence de tout incident qui pourrait me survenir.',
+    leg6: 'La version espagnole de cet acte est le texte officiel.',
+    acepto: 'J\'ai lu et j\'accepte l\'acte. Chaque personne enregistrée signe dans son propre cadre.',
+    'btn.generar': 'Générer l\'attestation', 'msg.generando': 'Génération…',
+    'p.titulo': 'Détails de la personne', 'p.integrante': 'Membre {n}', 'p.quitar': 'Supprimer', 'p.borrarFirma': 'Effacer la signature', 'p.firma': 'Signature *',
+    'f.nombre': 'Nom complet *', 'f.docTipo': 'Type de document *', 'f.docNumero': 'Numéro de document *', 'f.edad': 'Âge *',
+    'f.telefono': 'Téléphone de contact *', 'f.residencia': 'Lieu de résidence / adresse', 'f.emNombre': 'Contact d\'urgence (nom) *',
+    'f.emTelefono': 'Contact d\'urgence (téléphone) *', 'f.salud': 'Santé, allergies ou remarques',
+    'doc.CC': 'CC – Carte d\'identité colombienne', 'doc.TI': 'TI – Carte d\'identité de mineur', 'doc.CE': 'CE – Carte d\'étranger', 'doc.PA': 'PA – Passeport', 'doc.CI': 'CI – Autre pièce', 'doc.DNI': 'DNI – Pièce d\'identité étrangère',
+    'err.prefix': 'Veuillez vérifier : ', 'err.member': 'Membre {n} : ', 'err.fecha': 'Indiquez la date d\'entrée.', 'err.liderNombre': 'Indiquez le nom du responsable du groupe.',
+    'err.liderTel': 'Le téléphone du responsable n\'est pas valide.', 'err.nombre': 'indiquez le nom complet.', 'err.docNumero': 'le numéro de document n\'est pas valide.',
+    'err.edad': 'l\'âge n\'est pas valide.', 'err.telefono': 'le téléphone n\'est pas valide.', 'err.emNombre': 'indiquez le nom du contact d\'urgence.',
+    'err.emTelefono': 'le téléphone du contact d\'urgence n\'est pas valide.', 'err.firma': 'la signature est manquante.', 'err.acepto': 'Vous devez lire et accepter l\'acte.',
+    'err.fail': 'Impossible de générer l\'attestation : {e}. Réessayez.',
+    'c.titulo': 'Attestation d\'enregistrement', 'c.registrado': 'Enregistré le', 'c.fechaIngreso': 'Date d\'entrée', 'c.tipo': 'Type',
+    'c.tipoInd': 'Individuel', 'c.tipoGrp': 'Groupe de {n} personne(s)', 'c.actividad': 'Activité ou lieu', 'c.codigo': 'Code de vérification',
+    'c.qrhelp': 'Scannez ce code QR avec l\'appareil photo de votre téléphone pour vérifier l\'attestation.',
+    'c.nota': 'Envoyez au Cabildo le fichier .json (il est consolidé dans le panneau) et l\'image de l\'attestation. Gardez l\'image sur votre téléphone comme preuve.',
+    'c.personaReg': 'Personne enregistrée', 'c.integrantesReg': 'Membres enregistrés',
+    'c.th.num': '#', 'c.th.nombre': 'Nom', 'c.th.doc': 'Document', 'c.th.tel': 'Téléphone',
+    'c.pdf.header': 'Attestation d\'enregistrement d\'entrée', 'c.pdf.folio': 'FOLIO', 'c.pdf.codigo': 'CODE DE VÉRIFICATION',
+    'c.pdf.fecha': 'DATE D\'ENTRÉE', 'c.pdf.reg': 'ENREGISTRÉ LE', 'c.pdf.tipo': 'TYPE', 'c.pdf.act': 'ACTIVITÉ OU LIEU',
+    'c.pdf.scan': 'Scannez le code QR avec l\'appareil photo de votre téléphone pour vérifier cette attestation.',
+    'c.pdf.data': 'Les données complètes restent dans le registre du Cabildo et ne sont consultées que pour vérification.', 'c.pdf.code': 'Code :',
+    'btn.wa': 'Envoyer par WhatsApp (attestation + données)', 'btn.png': 'Télécharger l\'attestation (image)', 'btn.json': 'Télécharger les données (.json)', 'btn.nuevo': 'Enregistrer une autre personne',
+    'aviso.file': 'Cette page a été ouverte depuis un fichier de l\'ordinateur. Pour que le QR fonctionne sur d\'autres téléphones, publiez cette page sur internet (voir LEEME).',
+    'share.text': 'Attestation d\'enregistrement {folio}. Je joins l\'attestation et les données d\'enregistrement pour le Cabildo.',
+    'share.ok': 'Attestation partagée.',
+    'share.dl': '2 fichiers ont été téléchargés. Dans WhatsApp, appuyez sur le trombone 📎, joignez-les au message ouvert et envoyez-le.',
+    'v.folio': 'Folio', 'v.fecha': 'Date d\'enregistrement', 'v.codigo': 'Code de vérification', 'v.btn': 'Enregistrer une personne',
+    'v.p1': 'Cette attestation correspond à un enregistrement d\'entrée sur le Territoire ancestral de la Communauté indigène de Puracé.',
+    'v.p2': 'Pour confirmer que les données correspondent au registre du Cabildo, saisissez le folio et le code dans le Panneau du Cabildo.',
+    'v.invalid': 'Ce code QR ne correspond pas à une attestation valide.'
+  },
+  pt: {
+    docTitle: 'Registo de entrada · Território Ancestral Puracé',
+    'title.reg': 'Registo de entrada – Território Ancestral',
+    'title.const': 'Declaração de registo',
+    'title.verif': 'Verificação da declaração',
+    'seg.ind': 'Individual', 'seg.grp': 'Grupo',
+    'sec.datos': 'Dados da entrada', 'f.fecha': 'Data de entrada *', 'f.actividad': 'Atividade ou local a visitar', 'f.actividadPh': 'Ex.: Termas de San Juan',
+    'sec.lider': 'Responsável pelo grupo', 'f.liderNombre': 'Nome *', 'f.liderTel': 'Telefone *',
+    'btn.agregar': '+ Adicionar integrante', 'sec.acta': 'Termo de responsabilidade',
+    leg1: 'Expresso livremente o meu desejo de entrar e desfrutar das atividades e serviços turísticos habilitados no Território Ancestral da Comunidade Indígena de Puracé. Li e ouvi atentamente as disposições, recomendações e orientações dadas pelo Comité de Turismo, orientadores turísticos, chagleros e guias antes e durante os percursos.',
+    leg2: 'Declaro não ter doenças como cardiopatias, problemas respiratórios ou pressão alta, não ter fraturas ou lesões anteriores, não estar sob o efeito de álcool ou substâncias psicoativas, e que o meu estado de saúde é adequado à atividade turística.',
+    leg3: 'Comprometo-me a cumprir com responsabilidade as disposições e orientações, e assumo os danos, despesas, lesões ou doenças que a natureza da(s) atividade(s) turística(s) possa causar-me.',
+    leg4: 'Devido à atividade da Cadeia Vulcânica Los Kokonucos (Alerta Amarelo) e às mudanças nos locais turísticos, sigo obrigatoriamente as recomendações do Cabildo Indígena de Puracé, do Comité de Turismo, dos chagleros, guias e demais pessoal.',
+    leg5: 'Autorizo as Autoridades Tradicionais, o Comité de Turismo, orientadores, chagleros e guias a informar o meu contacto de emergência sobre qualquer ocorrência que me possa acontecer.',
+    leg6: 'A versão em espanhol deste termo é o texto oficial.',
+    acepto: 'Li e aceito o termo. Cada pessoa registada assina no seu próprio campo.',
+    'btn.generar': 'Gerar declaração', 'msg.generando': 'A gerar…',
+    'p.titulo': 'Dados da pessoa', 'p.integrante': 'Integrante {n}', 'p.quitar': 'Remover', 'p.borrarFirma': 'Apagar assinatura', 'p.firma': 'Assinatura *',
+    'f.nombre': 'Nome completo *', 'f.docTipo': 'Tipo de documento *', 'f.docNumero': 'Número do documento *', 'f.edad': 'Idade *',
+    'f.telefono': 'Telefone de contacto *', 'f.residencia': 'Local de residência / endereço', 'f.emNombre': 'Contacto de emergência (nome) *',
+    'f.emTelefono': 'Contacto de emergência (telefone) *', 'f.salud': 'Condições de saúde, alergias ou observações',
+    'doc.CC': 'CC – Cédula de cidadania colombiana', 'doc.TI': 'TI – Cartão de identidade de menor', 'doc.CE': 'CE – Cédula de estrangeiro', 'doc.PA': 'PA – Passaporte', 'doc.CI': 'CI – Outro documento', 'doc.DNI': 'DNI – Documento de identidade estrangeiro',
+    'err.prefix': 'Verifique: ', 'err.member': 'Integrante {n}: ', 'err.fecha': 'Indique a data de entrada.', 'err.liderNombre': 'Indique o nome do responsável pelo grupo.',
+    'err.liderTel': 'Telefone do responsável não válido.', 'err.nombre': 'introduza o nome completo.', 'err.docNumero': 'número do documento não válido.',
+    'err.edad': 'idade não válida.', 'err.telefono': 'telefone não válido.', 'err.emNombre': 'nome do contacto de emergência.',
+    'err.emTelefono': 'telefone do contacto de emergência não válido.', 'err.firma': 'falta a assinatura.', 'err.acepto': 'Deve ler e aceitar o termo.',
+    'err.fail': 'Não foi possível gerar a declaração: {e}. Tente novamente.',
+    'c.titulo': 'Declaração de registo', 'c.registrado': 'Registado em', 'c.fechaIngreso': 'Data de entrada', 'c.tipo': 'Tipo',
+    'c.tipoInd': 'Individual', 'c.tipoGrp': 'Grupo de {n} pessoa(s)', 'c.actividad': 'Atividade ou local', 'c.codigo': 'Código de verificação',
+    'c.qrhelp': 'Leia este código QR com a câmara do telemóvel para verificar esta declaração.',
+    'c.nota': 'Envie ao Cabildo o ficheiro .json (é consolidado no painel) e a imagem da declaração. Guarde a imagem no telemóvel como comprovativo.',
+    'c.personaReg': 'Pessoa registada', 'c.integrantesReg': 'Integrantes registados',
+    'c.th.num': '#', 'c.th.nombre': 'Nome', 'c.th.doc': 'Documento', 'c.th.tel': 'Telefone',
+    'c.pdf.header': 'Declaração de registo de entrada', 'c.pdf.folio': 'FOLIO', 'c.pdf.codigo': 'CÓDIGO DE VERIFICAÇÃO',
+    'c.pdf.fecha': 'DATA DE ENTRADA', 'c.pdf.reg': 'REGISTADO EM', 'c.pdf.tipo': 'TIPO', 'c.pdf.act': 'ATIVIDADE OU LOCAL',
+    'c.pdf.scan': 'Leia o código QR com a câmara do telemóvel para verificar esta declaração.',
+    'c.pdf.data': 'Os dados completos ficam no registo do Cabildo e só são consultados para verificação.', 'c.pdf.code': 'Código:',
+    'btn.wa': 'Enviar por WhatsApp (declaração + dados)', 'btn.png': 'Descarregar declaração (imagem)', 'btn.json': 'Descarregar dados do registo (.json)', 'btn.nuevo': 'Registar outra pessoa',
+    'aviso.file': 'Esta página foi aberta a partir de um ficheiro do computador. Para que o código QR funcione noutros telemóveis, publique esta página na internet (ver LEEME).',
+    'share.text': 'Declaração de registo {folio}. Em anexo, a declaração e os dados do registo para o Cabildo.',
+    'share.ok': 'Declaração partilhada.',
+    'share.dl': 'Foram descarregados 2 ficheiros. No WhatsApp, use o clipe 📎, anexe-os à mensagem que se abriu e envie.',
+    'v.folio': 'Folio', 'v.fecha': 'Data de registo', 'v.codigo': 'Código de verificação', 'v.btn': 'Registar uma pessoa',
+    'v.p1': 'Esta declaração corresponde a um registo de entrada no Território Ancestral da Comunidade Indígena de Puracé.',
+    'v.p2': 'Para confirmar que os dados coincidem com o registo do Cabildo, introduza o folio e o código no Painel do Cabildo.',
+    'v.invalid': 'Este código QR não corresponde a uma declaração válida.'
+  },
+  de: {
+    docTitle: 'Einreiseregistrierung · Traditionelles Territorium Puracé',
+    'title.reg': 'Einreiseregistrierung – Traditionelles Territorium',
+    'title.const': 'Registrierungsbescheinigung',
+    'title.verif': 'Prüfung der Bescheinigung',
+    'seg.ind': 'Einzeln', 'seg.grp': 'Gruppe',
+    'sec.datos': 'Angaben zur Einreise', 'f.fecha': 'Einreisedatum *', 'f.actividad': 'Aktivität oder Ort', 'f.actividadPh': 'Z. B.: Thermalquellen von San Juan',
+    'sec.lider': 'Verantwortliche Person der Gruppe', 'f.liderNombre': 'Name *', 'f.liderTel': 'Telefon *',
+    'btn.agregar': '+ Teilnehmer hinzufügen', 'sec.acta': 'Verpflichtungserklärung',
+    leg1: 'Ich erkläre freiwillig, dass ich die touristischen Aktivitäten und Dienste innerhalb des traditionellen Territoriums der indigenen Gemeinschaft von Puracé betreten und genießen möchte. Ich habe die Bestimmungen, Empfehlungen und Hinweise des Tourismuskomitees, der touristischen Führer, der chagleros und der Guides vor und während der Touren gelesen und aufmerksam angehört.',
+    leg2: 'Ich erkläre, dass ich nicht an Krankheiten wie Herzerkrankungen, Atemwegsbeschwerden oder Bluthochdruck leide, keine früheren Brüche oder Verletzungen habe, nicht unter dem Einfluss von Alkohol oder psychoaktiven Substanzen stehe und mein Gesundheitszustand für die touristische Aktivität geeignet ist.',
+    leg3: 'Ich verpflichte mich, die Bestimmungen und Hinweise verantwortungsvoll zu befolgen, und übernehme Schäden, Kosten, Verletzungen oder Erkrankungen, die sich aus der Art der touristischen Aktivität(en) für mich ergeben können.',
+    leg4: 'Aufgrund der Aktivität der Vulkankette Los Kokonucos (Gelbe Warnstufe) und der Veränderungen an touristischen Orten befolge ich verbindlich die Empfehlungen des Cabildo Indígena de Puracé, des Tourismuskomitees, der chagleros, Guides und des übrigen Personals.',
+    leg5: 'Ich ermächtige die traditionellen Autoritäten, das Tourismuskomitee, Führer, chagleros und Guides, meine Notfallkontaktperson über jeden Vorfall zu informieren, der mir zustoßen kann.',
+    leg6: 'Die spanische Fassung dieser Erklärung ist der verbindliche Text.',
+    acepto: 'Ich habe die Erklärung gelesen und akzeptiere sie. Jede registrierte Person unterschreibt in ihrem eigenen Feld.',
+    'btn.generar': 'Bescheinigung erstellen', 'msg.generando': 'Wird erstellt…',
+    'p.titulo': 'Angaben zur Person', 'p.integrante': 'Teilnehmer {n}', 'p.quitar': 'Entfernen', 'p.borrarFirma': 'Unterschrift löschen', 'p.firma': 'Unterschrift *',
+    'f.nombre': 'Vollständiger Name *', 'f.docTipo': 'Dokumentart *', 'f.docNumero': 'Dokumentnummer *', 'f.edad': 'Alter *',
+    'f.telefono': 'Kontakttelefon *', 'f.residencia': 'Wohnort / Adresse', 'f.emNombre': 'Notfallkontakt (Name) *',
+    'f.emTelefono': 'Notfallkontakt (Telefon) *', 'f.salud': 'Gesundheitszustand, Allergien oder Hinweise',
+    'doc.CC': 'CC – Kolumbianischer Personalausweis', 'doc.TI': 'TI – Jugendausweis', 'doc.CE': 'CE – Ausländerausweis', 'doc.PA': 'PA – Reisepass', 'doc.CI': 'CI – Sonstiges Dokument', 'doc.DNI': 'DNI – Ausländisches Ausweisdokument',
+    'err.prefix': 'Bitte prüfen: ', 'err.member': 'Teilnehmer {n}: ', 'err.fecha': 'Geben Sie das Einreisedatum an.', 'err.liderNombre': 'Geben Sie den Namen der verantwortlichen Person an.',
+    'err.liderTel': 'Die Telefonnummer der verantwortlichen Person ist ungültig.', 'err.nombre': 'Geben Sie den vollständigen Namen an.', 'err.docNumero': 'Die Dokumentnummer ist ungültig.',
+    'err.edad': 'Das Alter ist ungültig.', 'err.telefono': 'Die Telefonnummer ist ungültig.', 'err.emNombre': 'Geben Sie den Namen der Notfallkontaktperson an.',
+    'err.emTelefono': 'Die Telefonnummer der Notfallkontaktperson ist ungültig.', 'err.firma': 'Die Unterschrift fehlt.', 'err.acepto': 'Sie müssen die Erklärung lesen und akzeptieren.',
+    'err.fail': 'Die Bescheinigung konnte nicht erstellt werden: {e}. Bitte versuchen Sie es erneut.',
+    'c.titulo': 'Registrierungsbescheinigung', 'c.registrado': 'Registriert am', 'c.fechaIngreso': 'Einreisedatum', 'c.tipo': 'Art',
+    'c.tipoInd': 'Einzeln', 'c.tipoGrp': 'Gruppe mit {n} Person(en)', 'c.actividad': 'Aktivität oder Ort', 'c.codigo': 'Prüfcode',
+    'c.qrhelp': 'Scannen Sie diesen QR-Code mit der Kamera Ihres Telefons, um die Bescheinigung zu prüfen.',
+    'c.nota': 'Senden Sie dem Cabildo die .json-Datei (sie wird im Panel zusammengeführt) und das Bild der Bescheinigung. Speichern Sie das Bild auf Ihrem Telefon als Nachweis.',
+    'c.personaReg': 'Registrierte Person', 'c.integrantesReg': 'Registrierte Teilnehmer',
+    'c.th.num': '#', 'c.th.nombre': 'Name', 'c.th.doc': 'Dokument', 'c.th.tel': 'Telefon',
+    'c.pdf.header': 'Bescheinigung der Einreiseregistrierung', 'c.pdf.folio': 'FOLIO', 'c.pdf.codigo': 'PRÜFCODE',
+    'c.pdf.fecha': 'EINREISEDATUM', 'c.pdf.reg': 'REGISTRIERT AM', 'c.pdf.tipo': 'ART', 'c.pdf.act': 'AKTIVITÄT ODER ORT',
+    'c.pdf.scan': 'Scannen Sie den QR-Code mit der Kamera Ihres Telefons, um diese Bescheinigung zu prüfen.',
+    'c.pdf.data': 'Die vollständigen Daten bleiben im Register des Cabildo und werden nur zur Prüfung abgerufen.', 'c.pdf.code': 'Code:',
+    'btn.wa': 'Per WhatsApp senden (Bescheinigung + Daten)', 'btn.png': 'Bescheinigung herunterladen (Bild)', 'btn.json': 'Registrierungsdaten herunterladen (.json)', 'btn.nuevo': 'Eine weitere Person registrieren',
+    'aviso.file': 'Diese Seite wurde aus einer Datei auf dem Computer geöffnet. Damit der QR-Code auf anderen Telefonen funktioniert, veröffentlichen Sie diese Seite im Internet (siehe LEEME).',
+    'share.text': 'Einreiseregistrierung {folio}. Anbei: Bescheinigung und Registrierungsdaten für den Cabildo.',
+    'share.ok': 'Bescheinigung geteilt.',
+    'share.dl': '2 Dateien wurden heruntergeladen. Tippen Sie in WhatsApp auf die Büroklammer 📎, fügen Sie sie der geöffneten Nachricht hinzu und senden Sie sie.',
+    'v.folio': 'Folio', 'v.fecha': 'Registrierungsdatum', 'v.codigo': 'Prüfcode', 'v.btn': 'Eine Person registrieren',
+    'v.p1': 'Diese Bescheinigung entspricht einer Einreiseregistrierung für das traditionelle Territorium der indigenen Gemeinschaft von Puracé.',
+    'v.p2': 'Um zu bestätigen, dass die Daten mit dem Register des Cabildo übereinstimmen, geben Sie Folio und Code im Panel des Cabildo ein.',
+    'v.invalid': 'Dieser QR-Code entspricht keiner gültigen Bescheinigung.'
+  }
+};
+
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function t(clave, vars){
+  let s = (T[lang] && T[lang][clave]) ?? T.es[clave] ?? clave;
+  if (vars) for (const k in vars) s = s.split('{' + k + '}').join(vars[k]);
+  return s;
+}
+function canon(v){            // JSON con claves ordenadas: misma huella en cualquier navegador
+  if (Array.isArray(v)) return '[' + v.map(canon).join(',') + ']';
+  if (v && typeof v === 'object') return '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}';
+  return JSON.stringify(v);
+}
+async function sha256Hex(texto){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+// Solo estos campos entran en la huella. El idioma no cambia el código de verificación.
+const hashable = r => ({ folio: r.folio, creado: r.creado, tipo: r.tipo, fechaIngreso: r.fechaIngreso, actividad: r.actividad, lider: r.lider, personas: r.personas });
+
+function generarFolio(d){
+  const yy = String(d.getFullYear()).slice(2), mm = String(d.getMonth() + 1).padStart(2, '0'), dd = String(d.getDate()).padStart(2, '0');
+  const alfa = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const r = new Uint32Array(4); crypto.getRandomValues(r);
+  let s = ''; for (const n of r) s += alfa[n % alfa.length];
+  return `PC-${yy}${mm}${dd}-${s}`;
+}
+const formatCodigo = c => c.match(/.{1,4}/g).join(' ');
+function fmtFechaIso(iso){
+  if (!iso) return '—';
+  return new Date(iso + 'T12:00:00').toLocaleDateString(LOCALES[lang], { day: '2-digit', month: 'short', year: 'numeric' });
+}
+const fmtFechaHora = iso => new Date(iso).toLocaleString(LOCALES[lang], { dateStyle: 'medium', timeStyle: 'short' });
+const hoyISO = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+const telValido = t => { const s = (t || '').trim(); const d = s.replace(/\D/g, ''); return d.length >= 7 && d.length <= 15 && /^[0-9+()\s-]+$/.test(s); };
+
+function urlVerificacion(folio, codigo){
+  const base = CONFIG.urlBase || location.href.split(/[?#]/)[0];
+  return `${base.split('#')[0]}#v=${folio}.${codigo}`;
+}
+function mostrarMsg(id, tipoMsg, texto){ const el = $(id); el.className = 'msg ' + tipoMsg; el.textContent = texto; }
+function ocultarMsg(id){ const el = $(id); el.className = 'msg'; el.textContent = ''; }
+function descargar(blob, nombre){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = nombre;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+}
+
+/* ---------- QR (qrcode-generator, MIT, incluida abajo) ---------- */
+function matrizQR(texto){
+  const q = qrcode(0, 'M'); q.addData(texto); q.make();
+  const n = q.getModuleCount(), m = [];
+  for (let r = 0; r < n; r++){ const fila = []; for (let c = 0; c < n; c++) fila.push(q.isDark(r, c)); m.push(fila); }
+  return m;
+}
+function dibujarQR(ctx, texto, x, y, tam){
+  const m = matrizQR(texto), n = m.length, zona = 2;
+  const celda = Math.floor(tam / (n + zona * 2)), total = celda * (n + zona * 2);
+  ctx.fillStyle = '#fff'; ctx.fillRect(x, y, total, total);
+  ctx.fillStyle = '#1a2e3a';
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++)
+    if (m[r][c]) ctx.fillRect(x + (c + zona) * celda, y + (r + zona) * celda, celda, celda);
+  return total;
+}
+
+function dibujarConstancia(rec, url){
+  const W = 800, M = 40, AZUL = '#1e4a7a', VERDE = '#7fbc4d', MUTED = '#5a6d7e', TEXTO = '#1a2e3a';
+  const FUENTE = '16px system-ui, Arial';
+  const filaH = 36, encabH = 120, infoH = 150, tituloTabla = 80, encabTabla = 34, qrT = 190, pieH = 110;
+  const H = encabH + infoH + tituloTabla + encabTabla + rec.personas.length * filaH + 30 + qrT + pieH + 20;
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const c = cv.getContext('2d');
+  const txt = (s, x, y, font, color, align = 'left') => { c.font = font; c.fillStyle = color; c.textAlign = align; c.fillText(s, x, y); c.textAlign = 'left'; };
+  const fit = (s, maxW, font) => { c.font = font; s = String(s ?? ''); if (c.measureText(s).width <= maxW) return s; while (s.length > 1 && c.measureText(s + '…').width > maxW) s = s.slice(0, -1); return s + '…'; };
+  const wrap = (s, maxW, font) => { c.font = font; const pal = String(s ?? '').split(/\s+/); const out = []; let cur = ''; for (const w of pal){ const tt = cur ? cur + ' ' + w : w; if (c.measureText(tt).width <= maxW) cur = tt; else { if (cur) out.push(cur); cur = w; } } if (cur) out.push(cur); return out; };
+  const etiqueta = (s, x, y) => txt(s, x, y, '700 12px system-ui, Arial', MUTED);
+
+  c.fillStyle = '#fff'; c.fillRect(0, 0, W, H);
+
+  // Encabezado
+  const g = c.createLinearGradient(0, 0, W, encabH);
+  g.addColorStop(0, AZUL); g.addColorStop(1, '#3bb4e5');
+  c.fillStyle = g; c.fillRect(0, 0, W, encabH);
+  txt(CONFIG.organizacion.toUpperCase() + ' · NIT ' + CONFIG.nit, M, 36, '600 14px system-ui, Arial', '#fff');
+  txt(t('c.pdf.header'), M, 74, '800 30px system-ui, Arial', '#fff');
+  txt(fit(CONFIG.territorio, W - 2 * M, FUENTE), M, 102, FUENTE, '#fff');
+
+  // Datos del registro
+  let y = encabH + 38;
+  etiqueta(t('c.pdf.folio'), M, y);
+  txt(rec.folio, M, y + 30, '700 26px ui-monospace, Consolas, monospace', AZUL);
+  c.font = '700 12px system-ui, Arial'; c.textAlign = 'right'; c.fillStyle = MUTED; c.fillText(t('c.pdf.codigo'), W - M, y); c.textAlign = 'left';
+  txt(formatCodigo(rec.codigo), W - M, y + 30, '700 22px ui-monospace, Consolas, monospace', AZUL, 'right');
+  y += 66;
+  const col2 = W / 2 + 10;
+  etiqueta(t('c.pdf.fecha'), M, y);
+  txt(fmtFechaIso(rec.fechaIngreso), M, y + 22, FUENTE, TEXTO);
+  etiqueta(t('c.pdf.reg'), col2, y);
+  txt(fmtFechaHora(rec.creado), col2, y + 22, FUENTE, TEXTO);
+  y += 52;
+  etiqueta(t('c.pdf.tipo'), M, y);
+  txt(rec.tipo === 'grupo' ? t('c.tipoGrp', { n: rec.personas.length }) : t('c.tipoInd'), M, y + 22, FUENTE, TEXTO);
+  etiqueta(t('c.pdf.act'), col2, y);
+  txt(fit(rec.actividad || '—', W / 2 - M - 10, FUENTE), col2, y + 22, FUENTE, TEXTO);
+
+  // Tabla de personas
+  y = encabH + infoH + tituloTabla;
+  txt(rec.tipo === 'grupo' ? t('c.integrantesReg') : t('c.personaReg'), M, y - 14, '700 15px system-ui, Arial', AZUL);
+  c.fillStyle = AZUL; c.fillRect(M, y, W - 2 * M, encabTabla);
+  const cols = { n: M + 10, nombre: M + 44, doc: M + 350, tel: M + 552 };
+  const cab = '700 13px system-ui, Arial';
+  txt(t('c.th.num'), cols.n, y + 22, cab, '#fff');
+  txt(t('c.th.nombre'), cols.nombre, y + 22, cab, '#fff');
+  txt(t('c.th.doc'), cols.doc, y + 22, cab, '#fff');
+  txt(t('c.th.tel'), cols.tel, y + 22, cab, '#fff');
+  y += encabTabla;
+  rec.personas.forEach((p, i) => {
+    if (i % 2 === 0) { c.fillStyle = '#f6f1e8'; c.fillRect(M, y, W - 2 * M, filaH); }
+    c.strokeStyle = '#e3dccd'; c.beginPath(); c.moveTo(M, y + filaH); c.lineTo(W - M, y + filaH); c.stroke();
+    txt(String(i + 1), cols.n, y + 23, '14px system-ui, Arial', TEXTO);
+    txt(fit(p.nombre, 290, '15px system-ui, Arial'), cols.nombre, y + 23, '15px system-ui, Arial', TEXTO);
+    txt(fit(`${p.docTipo} ${p.docNumero}`, 185, '14px system-ui, Arial'), cols.doc, y + 23, '14px system-ui, Arial', TEXTO);
+    txt(fit(p.telefono, 130, '14px system-ui, Arial'), cols.tel, y + 23, '14px system-ui, Arial', TEXTO);
+    y += filaH;
+  });
+
+  // Pie con QR de verificación
+  y += 30;
+  const qrX = W - M - 170;
+  dibujarQR(c, url, qrX, y, 170);
+  let ty = y + 22;
+  [t('c.pdf.scan'), t('c.pdf.data')].forEach(l => {
+    wrap(l, qrX - M - 20, '15px system-ui, Arial').forEach(linea => { txt(linea, M, ty, '15px system-ui, Arial', TEXTO); ty += 22; });
+    ty += 8;
+  });
+  txt(t('c.pdf.code') + ' ' + formatCodigo(rec.codigo), M, ty + 6, '700 16px ui-monospace, Consolas, monospace', AZUL);
+
+  // Banda inferior
+  c.fillStyle = VERDE; c.fillRect(0, H - 12, W, 12);
+  return cv;
+}
+
+
+/* ============================================================
+   TEXTOS NUEVOS: acuse de recibo, autorización de datos y envío
+   ============================================================ */
+Object.assign(T.es, {
+  'btn.enviar': 'Enviar registro',
+  'consent': 'Autorizo al Cabildo Indígena de Puracé a tratar mis datos personales y de salud, solo para el registro, la seguridad y la atención en el territorio (Ley 1581 de 2012).',
+  'err.consent': 'Debe autorizar el tratamiento de sus datos.',
+  'sent.titulo': 'Registro enviado',
+  'sent.estado': 'Estado',
+  'sent.recibido': 'Recibido. Pendiente de constancia y de verificación de pago y condiciones.',
+  'sent.texto': 'El Cabildo emitirá su constancia con código de verificación y se la enviará por WhatsApp al número {tel}. El ingreso queda sujeto a la verificación de pago y condiciones.',
+  'sent.copia': 'Descargar copia de mi registro (.json)',
+  'sent.nuevo': 'Registrar otra persona',
+  'sent.error': 'No se pudo enviar el registro: {e}. Sus datos siguen en pantalla; intente de nuevo.',
+  'sent.respaldo': 'Enviar por WhatsApp como respaldo',
+  'sent.modoPrueba': 'Modo de prueba: el registro se guarda solo en este navegador.'
+});
+Object.assign(T.en, {
+  'btn.enviar': 'Send registration',
+  'consent': 'I authorize the Cabildo Indígena de Puracé to process my personal and health data, only for registration, safety and assistance in the territory (Colombian Law 1581 of 2012).',
+  'err.consent': 'You must authorize the processing of your data.',
+  'sent.titulo': 'Registration sent',
+  'sent.estado': 'Status',
+  'sent.recibido': 'Received. Pending certificate and verification of payment and conditions.',
+  'sent.texto': 'The Cabildo will issue your certificate with a verification code and send it to you by WhatsApp at {tel}. Entry is subject to verification of payment and conditions.',
+  'sent.copia': 'Download a copy of my registration (.json)',
+  'sent.nuevo': 'Register another person',
+  'sent.error': 'The registration could not be sent: {e}. Your data is still on screen; please try again.',
+  'sent.respaldo': 'Send by WhatsApp as backup',
+  'sent.modoPrueba': 'Test mode: the registration is stored only in this browser.'
+});
+Object.assign(T.fr, {
+  'btn.enviar': 'Envoyer l\'inscription',
+  'consent': 'J\'autorise le Cabildo indígena de Puracé à traiter mes données personnelles et de santé, uniquement pour l\'enregistrement, la sécurité et l\'assistance sur le territoire (loi colombienne 1581 de 2012).',
+  'err.consent': 'Vous devez autoriser le traitement de vos données.',
+  'sent.titulo': 'Inscription envoyée',
+  'sent.estado': 'Statut',
+  'sent.recibido': 'Reçue. En attente de l\'attestation et de la vérification du paiement et des conditions.',
+  'sent.texto': 'Le Cabildo émettra votre attestation avec un code de vérification et vous l\'enverra par WhatsApp au numéro {tel}. L\'entrée est subordonnée à la vérification du paiement et des conditions.',
+  'sent.copia': 'Télécharger une copie de mon inscription (.json)',
+  'sent.nuevo': 'Enregistrer une autre personne',
+  'sent.error': 'L\'inscription n\'a pas pu être envoyée : {e}. Vos données sont toujours à l\'écran ; réessayez.',
+  'sent.respaldo': 'Envoyer par WhatsApp en secours',
+  'sent.modoPrueba': 'Mode test : l\'inscription est enregistrée uniquement dans ce navigateur.'
+});
+Object.assign(T.pt, {
+  'btn.enviar': 'Enviar registo',
+  'consent': 'Autorizo o Cabildo Indígena de Puracé a tratar os meus dados pessoais e de saúde, apenas para o registo, a segurança e o apoio no território (Lei colombiana 1581 de 2012).',
+  'err.consent': 'Deve autorizar o tratamento dos seus dados.',
+  'sent.titulo': 'Registo enviado',
+  'sent.estado': 'Estado',
+  'sent.recibido': 'Recebido. Pendente de declaração e de verificação de pagamento e condições.',
+  'sent.texto': 'O Cabildo emitirá a sua declaração com código de verificação e enviá-la-á por WhatsApp para o número {tel}. A entrada fica sujeita à verificação do pagamento e das condições.',
+  'sent.copia': 'Descarregar cópia do meu registo (.json)',
+  'sent.nuevo': 'Registar outra pessoa',
+  'sent.error': 'Não foi possível enviar o registo: {e}. Os seus dados continuam no ecrã; tente novamente.',
+  'sent.respaldo': 'Enviar por WhatsApp como apoio',
+  'sent.modoPrueba': 'Modo de teste: o registo fica guardado apenas neste navegador.'
+});
+Object.assign(T.de, {
+  'btn.enviar': 'Registrierung senden',
+  'consent': 'Ich ermächtige den Cabildo Indígena de Puracé, meine personenbezogenen und Gesundheitsdaten ausschließlich für Registrierung, Sicherheit und Betreuung im Territorium zu verarbeiten (kolumbianisches Gesetz 1581 von 2012).',
+  'err.consent': 'Sie müssen die Verarbeitung Ihrer Daten autorisieren.',
+  'sent.titulo': 'Registrierung gesendet',
+  'sent.estado': 'Status',
+  'sent.recibido': 'Eingegangen. Ausstehend: Bescheinigung und Prüfung von Zahlung und Bedingungen.',
+  'sent.texto': 'Der Cabildo stellt Ihre Bescheinigung mit Prüfcode aus und sendet sie Ihnen per WhatsApp an die Nummer {tel}. Der Eintritt unterliegt der Prüfung von Zahlung und Bedingungen.',
+  'sent.copia': 'Kopie meiner Registrierung herunterladen (.json)',
+  'sent.nuevo': 'Eine weitere Person registrieren',
+  'sent.error': 'Die Registrierung konnte nicht gesendet werden: {e}. Ihre Daten sind noch auf dem Bildschirm; bitte erneut versuchen.',
+  'sent.respaldo': 'Per WhatsApp als Sicherung senden',
+  'sent.modoPrueba': 'Testmodus: Die Registrierung wird nur in diesem Browser gespeichert.'
+});
+
+/* ============================================================
+   ALMACÉN COMPARTIDO: Supabase, o modo local de prueba
+   Con CONFIG.supabaseUrl y CONFIG.supabaseKey vacíos, todo se guarda solo en este navegador.
+   ============================================================ */
+const LOCAL_KEY = 'registros-demo';
+const COLS_LISTA = 'folio,creado,tipo,contacto,titular,personas_n,fecha_ingreso,estado,codigo,constancia_at,pago_verificado,condiciones_verificadas,notas';
+function leerLocal(){ try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || '{}'); } catch (e) { return {}; } }
+function guardarLocal(m){ localStorage.setItem(LOCAL_KEY, JSON.stringify(m)); }
+
+const DB = {
+  cliente: null,
+  modo(){ return (CONFIG.supabaseUrl && CONFIG.supabaseKey) ? 'supabase' : 'local'; },
+  iniciar(){
+    if (this.modo() === 'supabase' && window.supabase)
+      this.cliente = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
+    return this;
+  },
+  async insertar(fila){
+    if (this.cliente){
+      const { error } = await this.cliente.from('registros').insert(fila);
+      if (error) throw new Error(error.message);
+      return;
+    }
+    const m = leerLocal();
+    if (m[fila.folio]) throw new Error('folio repetido');
+    m[fila.folio] = fila; guardarLocal(m);
+  },
+  async upsert(fila){
+    if (this.cliente){
+      const { error } = await this.cliente.from('registros').upsert(fila, { onConflict: 'folio' });
+      if (error) throw new Error(error.message);
+      return;
+    }
+    const m = leerLocal(); m[fila.folio] = { ...(m[fila.folio] || {}), ...fila }; guardarLocal(m);
+  },
+  async listar(){
+    if (this.cliente){
+      const { data, error } = await this.cliente.from('registros').select(COLS_LISTA).order('creado', { ascending: false });
+      if (error) throw new Error(error.message);
+      return data;
+    }
+    return Object.values(leerLocal()).map(({ datos, ...r }) => r).sort((a, b) => (b.creado || '').localeCompare(a.creado || ''));
+  },
+  async todos(){
+    if (this.cliente){
+      const { data, error } = await this.cliente.from('registros').select('*');
+      if (error) throw new Error(error.message);
+      return data;
+    }
+    return Object.values(leerLocal());
+  },
+  async leerDatos(folio){
+    if (this.cliente){
+      const { data, error } = await this.cliente.from('registros').select('datos').eq('folio', folio).maybeSingle();
+      if (error) throw new Error(error.message);
+      return data ? data.datos : null;
+    }
+    const r = leerLocal()[folio]; return r ? r.datos : null;
+  },
+  async actualizar(folio, cambios){
+    if (this.cliente){
+      const { error } = await this.cliente.from('registros').update(cambios).eq('folio', folio);
+      if (error) throw new Error(error.message);
+      return;
+    }
+    const m = leerLocal(); if (!m[folio]) throw new Error('no existe');
+    m[folio] = { ...m[folio], ...cambios }; guardarLocal(m);
+  },
+  async haySesion(){
+    if (!this.cliente) return true;
+    const { data } = await this.cliente.auth.getSession();
+    return !!(data && data.session);
+  },
+  async entrar(correo, clave){
+    const { error } = await this.cliente.auth.signInWithPassword({ email: correo, password: clave });
+    if (error) throw new Error(error.message);
+  },
+  async salir(){ if (this.cliente) await this.cliente.auth.signOut(); }
+};
+
+/* ============================================================
+   AYUDAS COMPARTIDAS
+   ============================================================ */
+function numeroWhatsapp(tel){
+  let d = String(tel || '').replace(/\D/g, '');
+  if (d.startsWith('00')) d = d.slice(2);
+  if (d.length === 10 && d.startsWith('3')) d = '57' + d;   // celular colombiano
+  return d;
+}
+function filaDesdeCore(core, codigo, estado){
+  const titular = core.tipo === 'grupo' ? (core.lider?.nombre || '') : (core.personas[0]?.nombre || '');
+  const contacto = core.tipo === 'grupo' ? (core.lider?.telefono || '') : (core.personas[0]?.telefono || '');
+  return {
+    folio: core.folio, creado: core.creado, tipo: core.tipo, contacto, titular,
+    personas_n: core.personas.length, fecha_ingreso: core.fechaIngreso,
+    estado, codigo: codigo || null, datos: core
+  };
+}
+async function codigoDe(core){
+  return (await sha256Hex(canon(hashable(core)))).slice(0, 12).toUpperCase();
+}
+// Dibuja la constancia en el idioma del visitante (no cambia el idioma de la pantalla)
+async function constanciaPNG(rec, idioma){
+  const previo = lang;
+  lang = idioma || rec.idioma || 'es';
+  try {
+    const cv = dibujarConstancia(rec, urlVerificacion(rec.folio, rec.codigo));
+    return await new Promise(r => cv.toBlob(r, 'image/png'));
+  } finally { lang = previo; }
+}
+
+</script>
+<script>
+/* ============================================================
+   PANEL (interfaz en español)
+   ============================================================ */
+const ESTADO_TXT = { recibido: 'Recibido', constancia: 'Constancia emitida', habilitado: 'Habilitado' };
+const ESTADO_CLASE = { recibido: '', constancia: 'c', habilitado: 'h' };
+let registros = [], filtro = 'todos', detalle = null, temporizador = null;
+
+const aviso = (el, tipo, html) => { el.className = (el.id === 'msgImp' || el.id === 'msgLogin') ? 'msg ' + tipo : 'res ' + tipo; el.innerHTML = html; };
+const horaActual = () => new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+const fechaCorta = iso => iso ? new Date(iso).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
+const fechaIng = iso => { if (!iso) return '—'; const [y, m, d] = iso.split('-'); return `${d}/${m}/${y}`; };
+const DOC_NOMBRE = { CC: 'C.C.', TI: 'T.I.', CE: 'C.E.', PA: 'Pasaporte', CI: 'CI', DNI: 'DNI' };
+const csvCelda = v => { const s = v == null ? '' : String(v); return /[";\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+const csvTexto = filas => '﻿' + filas.map(f => f.map(csvCelda).join(';')).join('\r\n');
+
+/* ---------- Lista y resumen ---------- */
+async function cargar(){
+  try {
+    registros = await DB.listar();
+    pintarResumen(); pintarLista();
+    $('#actualizado').textContent = 'Actualizado ' + horaActual();
+  } catch (e) {
+    aviso($('#msgImp'), 'err', 'No se pudo leer los registros: ' + esc(e.message));
+  }
+}
+function pintarResumen(){
+  const cuenta = e => registros.filter(r => r.estado === e).length;
+  $('#stRecibidos').textContent = cuenta('recibido');
+  $('#stConstancia').textContent = cuenta('constancia');
+  $('#stHabilitados').textContent = cuenta('habilitado');
+  $('#stPersonas').textContent = registros.reduce((a, r) => a + (r.personas_n || 0), 0);
+}
+function pintarLista(){
+  const q = $('#buscar').value.trim().toLowerCase();
+  const visibles = registros.filter(r => (filtro === 'todos' || r.estado === filtro) &&
+    (!q || [r.folio, r.titular, r.contacto, r.fecha_ingreso].join(' ').toLowerCase().includes(q)));
+  $('#vacio').classList.toggle('oculto', registros.length > 0);
+  $('#tbRegistros').innerHTML = visibles.map(r => `<tr class="fila" data-folio="${esc(r.folio)}" style="cursor:pointer">
+      <td class="folio">${esc(r.folio)}</td><td>${fechaCorta(r.creado)}</td>
+      <td>${r.tipo === 'grupo' ? 'Grupo' : 'Individual'}</td><td>${r.personas_n}</td>
+      <td>${esc(r.titular)}</td><td>${esc(r.contacto)}</td>
+      <td><span class="estado ${ESTADO_CLASE[r.estado] || ''}">${ESTADO_TXT[r.estado] || r.estado}</span></td></tr>`).join('')
+    || (registros.length ? '<tr><td colspan="7" style="color:var(--muted)">Ningún registro coincide con el filtro.</td></tr>' : '');
+}
+
+/* ---------- Detalle y acciones ---------- */
+async function abrirDetalle(folio){
+  const fila = registros.find(r => r.folio === folio);
+  if (!fila) return;
+  let datos;
+  try { datos = await DB.leerDatos(folio); } catch (e) { alert('No se pudo leer el registro: ' + e.message); return; }
+  if (!datos){ alert('El registro no tiene datos.'); return; }
+  detalle = { fila, datos };
+  pintarDetalle();
+  $('#dlg').showModal();
+}
+function pintarDetalle(){
+  const { fila, datos } = detalle;
+  $('#dlgTitulo').textContent = `${fila.folio} · ${ESTADO_TXT[fila.estado] || fila.estado}`;
+  const conCodigo = !!fila.codigo;
+  $('#dlgCuerpo').innerHTML = `
+    <div class="grid2" style="margin-bottom:12px">
+      <div><div class="dato">Fecha de ingreso</div>${fechaIng(datos.fechaIngreso)}</div>
+      <div><div class="dato">Recibido</div>${fechaCorta(datos.creado)}</div>
+      <div><div class="dato">Actividad o sitio</div>${esc(datos.actividad) || '—'}</div>
+      <div><div class="dato">Tipo</div>${datos.tipo === 'grupo' ? 'Grupo' : 'Individual'} · ${datos.personas.length} persona(s)</div>
+      ${datos.lider ? `<div style="grid-column:1/-1"><div class="dato">Responsable del grupo</div>${esc(datos.lider.nombre)} · ${esc(datos.lider.telefono)}</div>` : ''}
+    </div>
+    <div class="scroll" style="max-height:none"><table class="tabla">
+      <thead><tr><th>#</th><th>Nombre</th><th>Documento</th><th>Edad</th><th>Teléfono</th><th>Emergencia</th><th>Salud / observaciones</th><th>Firma</th></tr></thead>
+      <tbody>${datos.personas.map((p, i) => `<tr>
+        <td>${i + 1}</td><td><b>${esc(p.nombre)}</b><div class="dato" style="text-transform:none">${esc(p.residencia)}</div></td>
+        <td>${esc(DOC_NOMBRE[p.docTipo] || p.docTipo)} ${esc(p.docNumero)}</td><td>${esc(p.edad)}</td>
+        <td>${esc(p.telefono)}</td><td>${esc(p.emNombre)}<br>${esc(p.emTelefono)}</td>
+        <td>${esc(p.salud) || '—'}</td>
+        <td>${p.firma ? `<img class="firma-img" src="${p.firma}" alt="Firma">` : '—'}</td></tr>`).join('')}
+      </tbody></table></div>
+
+    <div class="bloque">
+      <h3>1. Constancia y código de verificación</h3>
+      ${conCodigo
+        ? `<div class="valor">Código: <span class="codigo">${formatCodigo(fila.codigo)}</span> · emitida ${fechaCorta(fila.constancia_at)}</div>
+           <div class="acciones">
+             <button class="btn sec" type="button" id="btnVerImg">Ver constancia (imagen)</button>
+             <button class="btn sec" type="button" id="btnDescImg">Descargar constancia (imagen)</button>
+             <button class="btn wa" type="button" id="btnWa">Enviar al visitante por WhatsApp</button>
+           </div>`
+        : `<p class="nota-p">La constancia se emite primero: genera el código de verificación y ya no se podrán modificar los datos del registro.</p>
+           <button class="btn" type="button" id="btnEmitir">Generar constancia y código</button>`}
+    </div>
+
+    <div class="bloque">
+      <h3>2. Verificación de pago y condiciones</h3>
+      ${conCodigo
+        ? `<label style="flex-direction:row;align-items:center;gap:8px;font-weight:600"><input type="checkbox" id="chkPago" ${fila.pago_verificado ? 'checked' : ''}> Pago verificado</label>
+           <label style="flex-direction:row;align-items:center;gap:8px;font-weight:600;margin-top:6px"><input type="checkbox" id="chkCond" ${fila.condiciones_verificadas ? 'checked' : ''}> Condiciones verificadas (acta firmada, salud y contacto de emergencia)</label>
+           <label style="margin-top:8px">Notas<textarea id="notas" rows="2">${esc(fila.notas || '')}</textarea></label>
+           <div class="acciones" style="margin-top:8px"><button class="btn" type="button" id="btnGuardarVerif">Guardar verificación</button></div>
+           <p class="nota-p">Con ambas casillas marcadas, el registro queda <b>Habilitado</b>.</p>`
+        : `<p class="nota-p">Primero emita la constancia y después verifique el pago y las condiciones.</p>`}
+    </div>`;
+
+  const on = (id, fn) => { const el = $(id); if (el) el.onclick = fn; };
+  on('#btnEmitir', emitirConstancia);
+  on('#btnVerImg', () => verImagen());
+  on('#btnDescImg', () => descargarImagen());
+  on('#btnWa', enviarVisitante);
+  on('#btnGuardarVerif', guardarVerificacion);
+}
+
+async function emitirConstancia(){
+  const { fila, datos } = detalle;
+  if (!confirm(`¿Emitir la constancia del folio ${fila.folio}? Se generará su código de verificación y los datos quedarán bloqueados.`)) return;
+  try {
+    const codigo = await codigoDe(datos);
+    const constancia_at = new Date().toISOString();
+    await DB.actualizar(fila.folio, { codigo, constancia_at, estado: 'constancia' });
+    Object.assign(fila, { codigo, constancia_at, estado: 'constancia' });
+    await cargar();
+    pintarDetalle();
+  } catch (e) { alert('No se pudo emitir la constancia: ' + e.message); }
+}
+
+async function guardarVerificacion(){
+  const { fila } = detalle;
+  const pago = $('#chkPago').checked, cond = $('#chkCond').checked, notas = $('#notas').value.trim();
+  const estado = pago && cond ? 'habilitado' : 'constancia';
+  try {
+    await DB.actualizar(fila.folio, { pago_verificado: pago, condiciones_verificadas: cond, notas, estado });
+    Object.assign(fila, { pago_verificado: pago, condiciones_verificadas: cond, notas, estado });
+    await cargar();
+    pintarDetalle();
+  } catch (e) { alert('No se pudo guardar: ' + e.message); }
+}
+
+function registroConCodigo(){ const { fila, datos } = detalle; return { ...datos, codigo: fila.codigo }; }
+async function verImagen(){
+  const png = await constanciaPNG(registroConCodigo(), detalle.datos.idioma);
+  window.open(URL.createObjectURL(png), '_blank');
+}
+async function descargarImagen(){
+  const png = await constanciaPNG(registroConCodigo(), detalle.datos.idioma);
+  descargar(png, `Constancia-${detalle.fila.folio}.png`);
+}
+async function enviarVisitante(){
+  const { fila, datos } = detalle;
+  const png = await constanciaPNG(registroConCodigo(), datos.idioma);
+  const file = new File([png], `Constancia-${fila.folio}.png`, { type: 'image/png' });
+  const previo = lang; lang = datos.idioma || 'es';
+  const texto = t('share.text', { folio: fila.folio });
+  lang = previo;
+  if (navigator.canShare && navigator.canShare({ files: [file] })){
+    try { await navigator.share({ files: [file], text: texto, title: 'Constancia de registro' }); return; }
+    catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  descargar(png, `Constancia-${fila.folio}.png`);
+  const num = numeroWhatsapp(fila.contacto);
+  if (!num){ alert('El registro no tiene un número de contacto válido. La imagen quedó descargada.'); return; }
+  window.open(`https://wa.me/${num}?text=${encodeURIComponent(texto)}`, '_blank');
+  alert('Se descargó la constancia. En WhatsApp, use el clip 📎 para adjuntar la imagen descargada y envíela.');
+}
+function descargarJson(){
+  const { fila, datos } = detalle;
+  const rec = { formato: 'registro-ingreso-purace', version: 2, organizacion: CONFIG.organizacion, nit: CONFIG.nit, ...datos, codigo: fila.codigo || null };
+  descargar(new Blob([JSON.stringify(rec, null, 2)], { type: 'application/json' }), `${fila.folio}.json`);
+}
+
+/* ---------- Verificar ---------- */
+async function verificarEntrada(texto){
+  const res = $('#resVer');
+  const m = /PC-\d{6}-[A-Z2-9]{4}/i.exec(texto || '');
+  if (!m){ aviso(res, 'err', 'No se reconoce el folio. Debe tener la forma <b>PC-AAMMDD-XXXX</b>.'); return; }
+  const folio = m[0].toUpperCase();
+  const resto = texto.slice(m.index + m[0].length).replace(/\s/g, '');
+  const cod = ((resto.match(/[0-9A-Fa-f]{12}/) || [])[0] || '').toUpperCase();
+  const fila = registros.find(r => r.folio === folio);
+  if (!fila){ aviso(res, 'err', `El folio <b class="folio">${esc(folio)}</b> no está en el registro.`); return; }
+  if (!fila.codigo){ aviso(res, 'info', `El folio <b class="folio">${esc(folio)}</b> existe, pero todavía no tiene constancia emitida.`); return; }
+  let datos;
+  try { datos = await DB.leerDatos(folio); } catch (e) { aviso(res, 'err', 'No se pudo leer el registro: ' + esc(e.message)); return; }
+  const recalculado = await codigoDe(datos);
+  if (recalculado !== fila.codigo){ aviso(res, 'err', '<b>✘ Los datos no coinciden con el código.</b> No acepte esta constancia.'); return; }
+  const estado = `Estado: <b>${ESTADO_TXT[fila.estado] || fila.estado}</b>` + (fila.estado === 'habilitado' ? '' : ' (falta verificar pago y condiciones)');
+  const titular = datos.tipo === 'grupo' ? `Grupo de ${datos.personas.length} persona(s), responsable ${esc(datos.lider?.nombre)}` : `${esc(datos.personas[0].nombre)} · ${esc(DOC_NOMBRE[datos.personas[0].docTipo] || datos.personas[0].docTipo)} ${esc(datos.personas[0].docNumero)}`;
+  const detalleHtml = `<div style="margin-top:6px">${titular}<br>Fecha de ingreso: ${fechaIng(datos.fechaIngreso)} · ${estado}</div>`;
+  if (!cod) aviso(res, 'info', `Registro encontrado: <b class="folio">${esc(folio)}</b>. Falta el código: compárelo con el de la constancia.${detalleHtml}`);
+  else if (cod === fila.codigo) aviso(res, 'ok', `<b>✔ Verificada.</b> La constancia <b class="folio">${esc(folio)}</b> coincide con el registro.${detalleHtml}`);
+  else aviso(res, 'err', `<b>✘ No coincide.</b> El código no corresponde al registro <b class="folio">${esc(folio)}</b>.`);
+}
+
+/* ---------- Exportar ---------- */
+async function exportarPersonas(){
+  const filas = [['Folio','Recibido','Fecha ingreso','Tipo','Actividad','Responsable grupo','Tel. responsable','N°','Nombre','Tipo documento','Número documento','Edad','Teléfono','Residencia','Contacto emergencia','Tel. emergencia','Salud / observaciones','Estado','Código verificación','Pago verificado','Condiciones verificadas']];
+  const todos = await DB.todos();
+  todos.forEach(r => {
+    const d = r.datos; if (!d) return;
+    d.personas.forEach((p, i) => filas.push([
+      r.folio, fechaCorta(d.creado), fechaIng(d.fechaIngreso), d.tipo === 'grupo' ? 'Grupo' : 'Individual', d.actividad || '',
+      d.lider?.nombre || '', d.lider?.telefono || '', i + 1, p.nombre, DOC_NOMBRE[p.docTipo] || p.docTipo, p.docNumero, p.edad,
+      p.telefono, p.residencia || '', p.emNombre, p.emTelefono, p.salud || '',
+      ESTADO_TXT[r.estado] || r.estado, r.codigo ? formatCodigo(r.codigo) : '', r.pago_verificado ? 'Sí' : 'No', r.condiciones_verificadas ? 'Sí' : 'No'
+    ]));
+  });
+  descargar(new Blob([csvTexto(filas)], { type: 'text/csv;charset=utf-8' }), `Consolidado-personas-${new Date().toISOString().slice(0, 10)}.csv`);
+}
+function exportarConstancias(){
+  const filas = [['Folio','Recibido','Fecha ingreso','Tipo','Nº personas','Titular','Contacto','Estado','Código verificación','Pago verificado','Condiciones verificadas']];
+  registros.forEach(r => filas.push([r.folio, fechaCorta(r.creado), fechaIng(r.fecha_ingreso), r.tipo === 'grupo' ? 'Grupo' : 'Individual', r.personas_n, r.titular, r.contacto, ESTADO_TXT[r.estado] || r.estado, r.codigo ? formatCodigo(r.codigo) : '', r.pago_verificado ? 'Sí' : 'No', r.condiciones_verificadas ? 'Sí' : 'No']));
+  descargar(new Blob([csvTexto(filas)], { type: 'text/csv;charset=utf-8' }), `Consolidado-constancias-${new Date().toISOString().slice(0, 10)}.csv`);
+}
+async function exportarRespaldo(){
+  const todos = await DB.todos();
+  const data = { formato: 'respaldo-registros-purace', version: 2, exportado: new Date().toISOString(), total: todos.length, registros: todos.map(r => ({ ...r.datos, codigo: r.codigo })) };
+  descargar(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), `Respaldo-registros-${new Date().toISOString().slice(0, 10)}.json`);
+}
+
+/* ---------- Importar archivos .json ---------- */
+function coreDesde(rec){
+  return { folio: rec.folio, creado: rec.creado, tipo: rec.tipo, fechaIngreso: rec.fechaIngreso, actividad: rec.actividad, lider: rec.lider ?? null, personas: rec.personas, idioma: rec.idioma || 'es' };
+}
+async function importarArchivos(lista){
+  const out = { nuevos: 0, existentes: 0, alterados: [], invalidos: [] };
+  for (const f of lista){
+    let data;
+    try { data = JSON.parse(await f.text()); }
+    catch { out.invalidos.push(`${f.name}: no es un JSON válido`); continue; }
+    const items = Array.isArray(data) ? data : (Array.isArray(data.registros) ? data.registros : [data]);
+    for (const rec of items){
+      if (!rec || rec.formato !== 'registro-ingreso-purace' || !/^PC-\d{6}-[A-Z2-9]{4}$/.test(rec.folio || '') || !Array.isArray(rec.personas) || !rec.personas.length){
+        out.invalidos.push(`${f.name}: formato no válido`); continue;
+      }
+      const core = coreDesde(rec);
+      if (rec.codigo && (await codigoDe(core)) !== rec.codigo){ out.alterados.push(`${rec.folio} (${f.name})`); continue; }
+      if (registros.some(r => r.folio === rec.folio)){ out.existentes++; continue; }
+      try {
+        await DB.insertar(filaDesdeCore(core, rec.codigo, rec.codigo ? 'constancia' : 'recibido'));
+        out.nuevos++;
+      } catch (e) { out.existentes++; }
+    }
+  }
+  await cargar();
+  let html = `Importación terminada: <b>${out.nuevos}</b> nuevo(s) · <b>${out.existentes}</b> ya existían o no se pudieron guardar.`;
+  if (out.alterados.length) html += `<br><b>No se importaron (contenido alterado):</b> ${out.alterados.map(esc).join(', ')}.`;
+  if (out.invalidos.length) html += `<br><b>No se importaron (formato no válido):</b> ${out.invalidos.map(esc).join(' · ')}.`;
+  aviso($('#msgImp'), out.alterados.length || out.invalidos.length ? 'err' : 'ok', html);
+}
+
+/* ---------- Acceso ---------- */
+async function mostrarPrincipal(){
+  $('#login').classList.add('oculto');
+  $('#principal').classList.remove('oculto');
+  if (DB.modo() === 'supabase') $('#btnSalir').classList.remove('oculto');
+  await cargar();
+  if (!temporizador) temporizador = setInterval(cargar, 20000);
+}
+async function iniciar(){
+  DB.iniciar();
+  $('#org').textContent = CONFIG.organizacion + ' · NIT ' + CONFIG.nit;
+  $('#urlCartel').textContent = CONFIG.urlBase;
+  pintarQR($('#qrCartel'), CONFIG.urlBase);
+  if (DB.modo() === 'supabase'){
+    $('#banner').className = 'banner ok'; $('#banner').textContent = 'Conectado a la base compartida. Los registros llegan en vivo al panel.';
+    if (await DB.haySesion()) mostrarPrincipal(); else $('#login').classList.remove('oculto');
+  } else {
+    $('#banner').className = 'banner prueba'; $('#banner').textContent = 'Modo de prueba: los datos se guardan solo en este navegador. Para uso real, configure la base compartida.';
+    mostrarPrincipal();
+  }
+}
+
+function pintarQR(canvas, texto){
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (texto) dibujarQR(ctx, texto, 0, 0, canvas.width);
+}
+
+function init(){
+  iniciar();
+  $('#btnEntrar').onclick = async () => {
+    try { await DB.entrar($('#loginCorreo').value.trim(), $('#loginClave').value); $('#msgLogin').className = 'msg'; mostrarPrincipal(); }
+    catch (e) { aviso($('#msgLogin'), 'err', 'No se pudo entrar: ' + esc(e.message)); }
+  };
+  $('#btnSalir').onclick = async () => { await DB.salir(); location.reload(); };
+  $('#btnActualizar').onclick = cargar;
+  $$('.filtros button').forEach(b => b.onclick = () => {
+    filtro = b.dataset.filtro;
+    $$('.filtros button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    pintarLista();
+  });
+  $('#buscar').addEventListener('input', pintarLista);
+  $('#tbRegistros').addEventListener('click', e => { const tr = e.target.closest('tr[data-folio]'); if (tr) abrirDetalle(tr.dataset.folio); });
+  $('#dlgCerrar').onclick = () => $('#dlg').close();
+  $('#dlgJson').onclick = descargarJson;
+  $('#btnVerificar').onclick = () => verificarEntrada($('#verEntrada').value);
+  $('#verEntrada').addEventListener('keydown', e => { if (e.key === 'Enter') verificarEntrada($('#verEntrada').value); });
+  $('#btnCsvPersonas').onclick = () => exportarPersonas().catch(e => alert(e.message));
+  $('#btnCsvConstancias').onclick = exportarConstancias;
+  $('#btnRespaldo').onclick = () => exportarRespaldo().catch(e => alert(e.message));
+  const input = $('#archivos'), drop = $('#drop');
+  $('#btnElegir').onclick = () => input.click();
+  input.onchange = () => { if (input.files.length) importarArchivos(Array.from(input.files)); input.value = ''; };
+  ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', e => { const fs = Array.from(e.dataTransfer.files); if (fs.length) importarArchivos(fs); });
+  $('#btnImprimirQR').onclick = () => { pintarQR($('#qrImpresion'), CONFIG.urlBase); window.print(); };
+}
+document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
