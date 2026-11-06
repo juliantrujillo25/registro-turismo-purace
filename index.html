@@ -157,6 +157,7 @@ footer{font-size:12px;color:var(--muted);text-align:center;padding:0 16px 24px}
         <div><div class="dato" data-i18n="v.codigo">Código de verificación</div><div class="valor code" id="verCodigo"></div></div>
       </div>
       <p data-i18n="v.p1"></p>
+      <div class="valor" id="verDatos" style="margin:10px 0"></div>
       <p data-i18n="v.p2"></p>
     </div>
     <a class="btn sec" id="verNuevo" href="#" data-i18n="v.btn">Registrar una persona</a>
@@ -2872,6 +2873,7 @@ function dibujarConstancia(rec, url){
 }
 
 
+
 /* ============================================================
    TEXTOS NUEVOS: acuse de recibo, autorización de datos y envío
    ============================================================ */
@@ -2945,6 +2947,59 @@ Object.assign(T.de, {
   'sent.respaldo': 'Per WhatsApp als Sicherung senden',
   'sent.modoPrueba': 'Testmodus: Die Registrierung wird nur in diesem Browser gespeichert.'
 });
+
+/* Verificación pública: datos enmascarados (inicial del nombre y últimos 4 dígitos del documento) */
+Object.assign(T.es, {
+  'v.estado': 'Estado', 'v.titular': 'Titular', 'v.documento': 'Documento',
+  'v.grupo': 'Grupo de {n} persona(s). Responsable',
+  'v.est.recibido': 'Recibido: pendiente de constancia y verificación',
+  'v.est.constancia': 'Constancia emitida: pendiente de verificación de pago y condiciones',
+  'v.est.habilitado': 'Habilitado para el ingreso',
+  'v.nocoincide': 'El código no corresponde a este folio. No acepte esta constancia.',
+  'v.sinBase': 'Este registro no se puede consultar desde esta página. Verifique en el panel del Cabildo.',
+  'v.p2': 'Compare el nombre y los últimos dígitos del documento con la cédula de la persona. Para ver todos los datos, consulte en el panel del Cabildo.'
+});
+Object.assign(T.en, {
+  'v.estado': 'Status', 'v.titular': 'Holder', 'v.documento': 'Document',
+  'v.grupo': 'Group of {n} person(s). Lead',
+  'v.est.recibido': 'Received: pending certificate and verification',
+  'v.est.constancia': 'Certificate issued: pending verification of payment and conditions',
+  'v.est.habilitado': 'Cleared for entry',
+  'v.nocoincide': 'The code does not match this folio. Do not accept this certificate.',
+  'v.sinBase': 'This record cannot be checked from this page. Verify it in the Cabildo panel.',
+  'v.p2': 'Compare the name and last digits of the document with the person\'s ID. For full details, check the Cabildo panel.'
+});
+Object.assign(T.fr, {
+  'v.estado': 'Statut', 'v.titular': 'Titulaire', 'v.documento': 'Document',
+  'v.grupo': 'Groupe de {n} personne(s). Responsable',
+  'v.est.recibido': 'Reçu : en attente de l\'attestation et de la vérification',
+  'v.est.constancia': 'Attestation émise : en attente de la vérification du paiement et des conditions',
+  'v.est.habilitado': 'Entrée autorisée',
+  'v.nocoincide': 'Le code ne correspond pas à ce numéro de dossier. N\'acceptez pas cette attestation.',
+  'v.sinBase': 'Cet enregistrement ne peut pas être consulté depuis cette page. Vérifiez dans le panneau du Cabildo.',
+  'v.p2': 'Comparez le nom et les derniers chiffres du document avec la pièce d\'identité. Pour tous les détails, consultez le panneau du Cabildo.'
+});
+Object.assign(T.pt, {
+  'v.estado': 'Estado', 'v.titular': 'Titular', 'v.documento': 'Documento',
+  'v.grupo': 'Grupo de {n} pessoa(s). Responsável',
+  'v.est.recibido': 'Recebido: pendente de declaração e verificação',
+  'v.est.constancia': 'Declaração emitida: pendente de verificação do pagamento e das condições',
+  'v.est.habilitado': 'Habilitado para a entrada',
+  'v.nocoincide': 'O código não corresponde a este folio. Não aceite esta declaração.',
+  'v.sinBase': 'Este registo não pode ser consultado nesta página. Verifique no painel do Cabildo.',
+  'v.p2': 'Compare o nome e os últimos dígitos do documento com o documento de identidade da pessoa. Para ver todos os dados, consulte o painel do Cabildo.'
+});
+Object.assign(T.de, {
+  'v.estado': 'Status', 'v.titular': 'Inhaber', 'v.documento': 'Dokument',
+  'v.grupo': 'Gruppe von {n} Person(en). Verantwortliche/r',
+  'v.est.recibido': 'Eingegangen: Bescheinigung und Prüfung ausstehend',
+  'v.est.constancia': 'Bescheinigung ausgestellt: Prüfung von Zahlung und Bedingungen ausstehend',
+  'v.est.habilitado': 'Zum Eintritt freigegeben',
+  'v.nocoincide': 'Der Code passt nicht zu dieser Nummer. Diese Bescheinigung nicht akzeptieren.',
+  'v.sinBase': 'Dieser Eintrag kann auf dieser Seite nicht abgerufen werden. Bitte im Panel des Cabildo prüfen.',
+  'v.p2': 'Vergleichen Sie Name und letzte Ziffern des Dokuments mit dem Ausweis der Person. Alle Angaben finden Sie im Panel des Cabildo.'
+});
+
 
 /* ============================================================
    ALMACÉN COMPARTIDO: Supabase, o modo local de prueba
@@ -3268,6 +3323,34 @@ function mostrarVerificacion(parametro){
   $('#verFecha').textContent = fmtFechaIso(`20${m[2]}-${m[3]}-${m[4]}`);
   $('#verCodigo').textContent = formatCodigo(m[5].toUpperCase());
   $('#verNuevo').href = location.href.split(/[?#]/)[0];
+  verificarEnBase(m[1].toUpperCase(), m[5].toUpperCase());
+}
+
+/* Consulta el nombre enmascarado solo si el folio y el código coinciden (función de la base) */
+async function verificarEnBase(folio, codigo){
+  const dv = $('#verDatos');
+  dv.textContent = '';
+  if (!DB.cliente){ dv.textContent = t('v.sinBase'); return; }
+  try {
+    const { data, error } = await DB.cliente.rpc('verificar_constancia', { p_folio: folio, p_codigo: codigo });
+    if (error) throw new Error(error.message);
+    if (!data || !data.length){
+      dv.innerHTML = `<div class="msg err" style="display:block">${esc(t('v.nocoincide'))}</div>`;
+      return;
+    }
+    const r = data[0];
+    const lineas = [];
+    if (r.tipo === 'grupo'){
+      lineas.push(`${esc(t('v.grupo', { n: r.personas_n }))}: <b>${esc(r.titular_mask || '')}</b>`);
+    } else {
+      lineas.push(`${esc(t('v.titular'))}: <b>${esc(r.titular_mask || '')}</b>`);
+      lineas.push(`${esc(t('v.documento'))}: <b>${esc(t('doc.' + r.doc_tipo))} ${esc(r.documento_mask || '')}</b>`);
+    }
+    lineas.push(`${esc(t('v.estado'))}: <b>${esc(t('v.est.' + r.estado))}</b>`);
+    dv.innerHTML = lineas.map(l => `<div style="margin:4px 0">${l}</div>`).join('');
+  } catch (e) {
+    dv.textContent = t('v.sinBase');
+  }
 }
 
 /* ============================================================
