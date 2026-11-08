@@ -123,6 +123,7 @@ dialog::backdrop{background:rgba(15,23,42,.55)}
 .estado{display:inline-block;border-radius:99px;padding:2px 9px;font-size:12px;font-weight:700;background:#fff4e5;color:#7a4a00;white-space:nowrap}
 .estado.c{background:#e8f5fc;color:#124a68}
 .estado.h{background:#edf7e3;color:#2f5a12}
+.estado.v{background:#e0f2fe;color:#075985}
 .bloque{border-top:1px solid var(--linea);margin-top:14px;padding-top:12px}
 .bloque h3{margin:0 0 8px}
 .nota-p{font-size:13px;color:var(--muted);margin:4px 0 8px}
@@ -183,8 +184,8 @@ dialog::backdrop{background:rgba(15,23,42,.55)}
     <section class="card">
       <h2>1. Resumen</h2>
       <div class="stats">
-        <div class="stat"><div class="n" id="stRecibidos">0</div><div class="l">Recibidos (sin constancia)</div></div>
-        <div class="stat"><div class="n" id="stConstancia">0</div><div class="l">Con constancia</div></div>
+        <div class="stat"><div class="n" id="stRecibidos">0</div><div class="l">Por verificar</div></div>
+        <div class="stat"><div class="n" id="stConstancia">0</div><div class="l">Verificados (falta constancia)</div></div>
         <div class="stat"><div class="n" id="stHabilitados">0</div><div class="l">Habilitados</div></div>
         <div class="stat"><div class="n" id="stPersonas">0</div><div class="l">Personas registradas</div></div>
       </div>
@@ -212,6 +213,7 @@ dialog::backdrop{background:rgba(15,23,42,.55)}
       <div class="filtros" role="group" aria-label="Filtrar">
         <button type="button" data-filtro="todos" aria-pressed="true">Todos</button>
         <button type="button" data-filtro="recibido" aria-pressed="false">Recibidos</button>
+        <button type="button" data-filtro="verificado" aria-pressed="false">Verificados</button>
         <button type="button" data-filtro="constancia" aria-pressed="false">Con constancia</button>
         <button type="button" data-filtro="habilitado" aria-pressed="false">Habilitados</button>
       </div>
@@ -3073,8 +3075,8 @@ Object.assign(T.es, {
   'err.consent': 'Debe autorizar el tratamiento de sus datos.',
   'sent.titulo': 'Registro enviado',
   'sent.estado': 'Estado',
-  'sent.recibido': 'Recibido. Pendiente de constancia y de verificación de pago y condiciones.',
-  'sent.texto': 'El Cabildo emitirá su constancia con código de verificación y se la enviará por WhatsApp al número {tel}. El ingreso queda sujeto a la verificación de pago y condiciones.',
+  'sent.recibido': 'Recibido. Pendiente de verificación de pago y condiciones; después se emite su constancia.',
+  'sent.texto': 'El Cabildo verificará el pago y las condiciones y, después, emitirá su constancia con código de verificación y se la enviará por WhatsApp al número {tel}. El ingreso queda sujeto a esa verificación.',
   'sent.copia': 'Descargar acta de corresponsabilidad (PDF)',
   'sent.nuevo': 'Registrar otra persona',
   'sent.error': 'No se pudo enviar el registro: {e}. Sus datos siguen en pantalla; intente de nuevo.',
@@ -3087,8 +3089,8 @@ Object.assign(T.en, {
   'err.consent': 'You must authorize the processing of your data.',
   'sent.titulo': 'Registration sent',
   'sent.estado': 'Status',
-  'sent.recibido': 'Received. Pending certificate and verification of payment and conditions.',
-  'sent.texto': 'The Cabildo will issue your certificate with a verification code and send it to you by WhatsApp at {tel}. Entry is subject to verification of payment and conditions.',
+  'sent.recibido': 'Received. Pending verification of payment and conditions; your certificate is issued afterwards.',
+  'sent.texto': 'The Cabildo will verify payment and conditions, then issue your certificate with a verification code and send it to you by WhatsApp at {tel}. Entry is subject to that verification.',
   'sent.copia': 'Download the liability form (PDF)',
   'sent.nuevo': 'Register another person',
   'sent.error': 'The registration could not be sent: {e}. Your data is still on screen; please try again.',
@@ -3101,8 +3103,8 @@ Object.assign(T.fr, {
   'err.consent': 'Vous devez autoriser le traitement de vos données.',
   'sent.titulo': 'Inscription envoyée',
   'sent.estado': 'Statut',
-  'sent.recibido': 'Reçue. En attente de l\'attestation et de la vérification du paiement et des conditions.',
-  'sent.texto': 'Le Cabildo émettra votre attestation avec un code de vérification et vous l\'enverra par WhatsApp au numéro {tel}. L\'entrée est subordonnée à la vérification du paiement et des conditions.',
+  'sent.recibido': 'Reçue. En attente de la vérification du paiement et des conditions ; l\'attestation est émise ensuite.',
+  'sent.texto': 'Le Cabildo vérifiera le paiement et les conditions, puis émettra votre attestation avec un code de vérification et vous l\'enverra par WhatsApp au numéro {tel}. L\'entrée est subordonnée à cette vérification.',
   'sent.copia': 'Télécharger le formulaire de responsabilité (PDF)',
   'sent.nuevo': 'Enregistrer une autre personne',
   'sent.error': 'L\'inscription n\'a pas pu être envoyée : {e}. Vos données sont toujours à l\'écran ; réessayez.',
@@ -3115,8 +3117,8 @@ Object.assign(T.pt, {
   'err.consent': 'Deve autorizar o tratamento dos seus dados.',
   'sent.titulo': 'Registo enviado',
   'sent.estado': 'Estado',
-  'sent.recibido': 'Recebido. Pendente de declaração e de verificação de pagamento e condições.',
-  'sent.texto': 'O Cabildo emitirá a sua declaração com código de verificação e enviá-la-á por WhatsApp para o número {tel}. A entrada fica sujeita à verificação do pagamento e das condições.',
+  'sent.recibido': 'Recebido. Pendente de verificação de pagamento e condições; depois é emitida a sua declaração.',
+  'sent.texto': 'O Cabildo verificará o pagamento e as condições e, depois, emitirá a sua declaração com código de verificação e enviá-la-á por WhatsApp para o número {tel}. A entrada fica sujeita a essa verificação.',
   'sent.copia': 'Descarregar termo de responsabilidade (PDF)',
   'sent.nuevo': 'Registar outra pessoa',
   'sent.error': 'Não foi possível enviar o registo: {e}. Os seus dados continuam no ecrã; tente novamente.',
@@ -3129,8 +3131,8 @@ Object.assign(T.de, {
   'err.consent': 'Sie müssen die Verarbeitung Ihrer Daten autorisieren.',
   'sent.titulo': 'Registrierung gesendet',
   'sent.estado': 'Status',
-  'sent.recibido': 'Eingegangen. Ausstehend: Bescheinigung und Prüfung von Zahlung und Bedingungen.',
-  'sent.texto': 'Der Cabildo stellt Ihre Bescheinigung mit Prüfcode aus und sendet sie Ihnen per WhatsApp an die Nummer {tel}. Der Eintritt unterliegt der Prüfung von Zahlung und Bedingungen.',
+  'sent.recibido': 'Eingegangen. Ausstehend: Prüfung von Zahlung und Bedingungen; danach wird die Bescheinigung ausgestellt.',
+  'sent.texto': 'Der Cabildo prüft Zahlung und Bedingungen und stellt danach Ihre Bescheinigung mit Prüfcode aus und sendet sie Ihnen per WhatsApp an die Nummer {tel}. Der Eintritt unterliegt dieser Prüfung.',
   'sent.copia': 'Haftungserklärung herunterladen (PDF)',
   'sent.nuevo': 'Eine weitere Person registrieren',
   'sent.error': 'Die Registrierung konnte nicht gesendet werden: {e}. Ihre Daten sind noch auf dem Bildschirm; bitte erneut versuchen.',
@@ -3828,8 +3830,10 @@ async function actaPDF(datos, folio){
 /* ============================================================
    PANEL (interfaz en español)
    ============================================================ */
-const ESTADO_TXT = { recibido: 'Recibido', constancia: 'Constancia emitida', habilitado: 'Habilitado' };
-const ESTADO_CLASE = { recibido: '', constancia: 'c', habilitado: 'h' };
+// Orden de trabajo: recibido → verificado (pago y condiciones) → habilitado (constancia y código emitidos).
+// "constancia" queda para registros anteriores, cuya constancia se emitió antes de verificar.
+const ESTADO_TXT = { recibido: 'Recibido', verificado: 'Verificado (falta constancia)', constancia: 'Constancia emitida', habilitado: 'Habilitado' };
+const ESTADO_CLASE = { recibido: '', verificado: 'v', constancia: 'c', habilitado: 'h' };
 let registros = [], filtro = 'todos', detalle = null, temporizador = null;
 let guias = [], ajustes = { cupo_diario: 30 }, cupoFechas = [], calSel = null;
 let calMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
@@ -3858,8 +3862,8 @@ async function cargar(){
 }
 function pintarResumen(){
   const cuenta = e => registros.filter(r => r.estado === e).length;
-  $('#stRecibidos').textContent = cuenta('recibido');
-  $('#stConstancia').textContent = cuenta('constancia');
+  $('#stRecibidos').textContent = cuenta('recibido') + cuenta('constancia');   // por verificar (incluye los anteriores con constancia sin verificar)
+  $('#stConstancia').textContent = cuenta('verificado');
   $('#stHabilitados').textContent = cuenta('habilitado');
   $('#stPersonas').textContent = registros.reduce((a, r) => a + (r.personas_n || 0), 0);
 }
@@ -3892,6 +3896,7 @@ function pintarDetalle(){
   const { fila, datos } = detalle;
   $('#dlgTitulo').textContent = `${fila.folio} · ${ESTADO_TXT[fila.estado] || fila.estado}`;
   const conCodigo = !!fila.codigo;
+  const verificado = !!(fila.pago_verificado && fila.condiciones_verificadas);   // pago y condiciones ya guardados como verificados
   $('#dlgCuerpo').innerHTML = `
     <div class="grid2" style="margin-bottom:12px">
       <div><div class="dato">Fecha de ingreso</div>${fechaIng(datos.fechaIngreso)}</div>
@@ -3928,7 +3933,19 @@ function pintarDetalle(){
     </div>
 
     <div class="bloque">
-      <h3>1. Constancia y código de verificación</h3>
+      <h3>1. Verificación de pago y condiciones</h3>
+      <label style="flex-direction:row;align-items:center;gap:8px;font-weight:600"><input type="checkbox" id="chkPago" ${fila.pago_verificado ? 'checked' : ''}> Pago verificado</label>
+      <label style="flex-direction:row;align-items:center;gap:8px;font-weight:600;margin-top:6px"><input type="checkbox" id="chkCond" ${fila.condiciones_verificadas ? 'checked' : ''}> Condiciones verificadas (acta firmada, salud y contacto de emergencia)</label>
+      <label style="display:block;margin-top:14px;font-weight:700">Observaciones
+        <textarea id="notas" rows="5" style="display:block;width:100%;min-height:130px;margin-top:6px;resize:vertical" placeholder="Escriba aquí las observaciones de la verificación">${esc(fila.notas || '')}</textarea></label>
+      <div class="acciones" style="margin-top:8px"><button class="btn" type="button" id="btnGuardarVerif">Guardar verificación</button></div>
+      <p class="nota-p">${conCodigo
+        ? 'La constancia ya fue emitida.'
+        : 'Con ambas casillas marcadas y guardadas, el registro queda <b>Verificado</b> y podrá generar la constancia y el código.'}</p>
+    </div>
+
+    <div class="bloque">
+      <h3>2. Constancia y código de verificación</h3>
       ${conCodigo
         ? `<div class="valor">Código: <span class="codigo">${formatCodigo(fila.codigo)}</span> · emitida ${fechaCorta(fila.constancia_at)}</div>
            <div class="acciones">
@@ -3936,20 +3953,10 @@ function pintarDetalle(){
              <button class="btn sec" type="button" id="btnDescImg">Descargar constancia (imagen)</button>
              <button class="btn wa" type="button" id="btnWa">Enviar al visitante por WhatsApp</button>
            </div>`
-        : `<p class="nota-p">La constancia se emite primero: genera el código de verificación y ya no se podrán modificar los datos del registro.</p>
-           <button class="btn" type="button" id="btnEmitir">Generar constancia y código</button>`}
-    </div>
-
-    <div class="bloque">
-      <h3>2. Verificación de pago y condiciones</h3>
-      ${conCodigo
-        ? `<label style="flex-direction:row;align-items:center;gap:8px;font-weight:600"><input type="checkbox" id="chkPago" ${fila.pago_verificado ? 'checked' : ''}> Pago verificado</label>
-           <label style="flex-direction:row;align-items:center;gap:8px;font-weight:600;margin-top:6px"><input type="checkbox" id="chkCond" ${fila.condiciones_verificadas ? 'checked' : ''}> Condiciones verificadas (acta firmada, salud y contacto de emergencia)</label>
-           <label style="display:block;margin-top:14px;font-weight:700">Observaciones
-             <textarea id="notas" rows="5" style="display:block;width:100%;min-height:130px;margin-top:6px;resize:vertical" placeholder="Escriba aquí las observaciones de la verificación">${esc(fila.notas || '')}</textarea></label>
-           <div class="acciones" style="margin-top:8px"><button class="btn" type="button" id="btnGuardarVerif">Guardar verificación</button></div>
-           <p class="nota-p">Con ambas casillas marcadas, el registro queda <b>Habilitado</b>.</p>`
-        : `<p class="nota-p">Primero emita la constancia y después verifique el pago y las condiciones.</p>`}
+        : verificado
+          ? `<p class="nota-p">Pago y condiciones verificados. Al generar la constancia se crea el código de verificación, el registro queda <b>Habilitado</b> y ya no se podrán modificar los datos.</p>
+             <button class="btn" type="button" id="btnEmitir">Generar constancia y código</button>`
+          : `<p class="nota-p">Disponible cuando el pago y las condiciones estén verificados y guardados (paso 1).</p>`}
     </div>`;
 
   const on = (id, fn) => { const el = $(id); if (el) el.onclick = fn; };
@@ -3992,13 +3999,15 @@ async function guardarGuia(){
 
 async function emitirConstancia(){
   const { fila, datos } = detalle;
-  if (!confirm(`¿Emitir la constancia del folio ${fila.folio}? Se generará su código de verificación y los datos quedarán bloqueados.`)) return;
+  // La constancia solo se emite después de verificar y guardar el pago y las condiciones
+  if (!(fila.pago_verificado && fila.condiciones_verificadas)){ alert('Primero verifique y guarde el pago y las condiciones (paso 1).'); return; }
+  if (!confirm(`¿Emitir la constancia del folio ${fila.folio}? Se generará su código de verificación, el registro quedará habilitado y los datos quedarán bloqueados.`)) return;
   try {
     await guardarGuiaSilencioso();   // no perder el guía ni el guardia escritos
     const codigo = await codigoDe(datos);
     const constancia_at = new Date().toISOString();
-    await DB.actualizar(fila.folio, { codigo, constancia_at, estado: 'constancia' });
-    Object.assign(fila, { codigo, constancia_at, estado: 'constancia' });
+    await DB.actualizar(fila.folio, { codigo, constancia_at, estado: 'habilitado' });
+    Object.assign(fila, { codigo, constancia_at, estado: 'habilitado' });
     await cargar();
     pintarDetalle();
   } catch (e) { alert('No se pudo emitir la constancia: ' + e.message); }
@@ -4007,7 +4016,8 @@ async function emitirConstancia(){
 async function guardarVerificacion(){
   const { fila } = detalle;
   const pago = $('#chkPago').checked, cond = $('#chkCond').checked, notas = $('#notas').value.trim();
-  const estado = pago && cond ? 'habilitado' : 'constancia';
+  // Sin constancia: recibido → verificado. Con constancia ya emitida: habilitado, o "constancia" si se desmarca algo.
+  const estado = fila.codigo ? (pago && cond ? 'habilitado' : 'constancia') : (pago && cond ? 'verificado' : 'recibido');
   try {
     await guardarGuiaSilencioso();
     await DB.actualizar(fila.folio, { pago_verificado: pago, condiciones_verificadas: cond, notas, estado });
@@ -4138,10 +4148,10 @@ function pintarGraficos(){
   }).join('');
 
   // Estado de los registros (anillo)
-  const cuenta = { recibido: 0, constancia: 0, habilitado: 0 };
+  const cuenta = { recibido: 0, verificado: 0, constancia: 0, habilitado: 0 };
   registros.forEach(r => { if (cuenta[r.estado] !== undefined) cuenta[r.estado]++; });
   const total = registros.length;
-  const cols = { recibido: '#e8a317', constancia: '#1b8fb5', habilitado: '#6dc82a' };
+  const cols = { recibido: '#e8a317', verificado: '#1b8fb5', constancia: '#94a3b8', habilitado: '#6dc82a' };
   let acc = 0;
   const partes = Object.keys(cuenta).map(k => {
     const a = total ? cuenta[k] / total * 360 : 0;
@@ -4298,7 +4308,7 @@ async function exportarExcel(){
   filas.sort((a, b) => (a.d.fechaIngreso || '').localeCompare(b.d.fechaIngreso || '') || a.r.folio.localeCompare(b.r.folio) || a.i - b.i);
   const ultima = Math.max(4 + filas.length, 5);   // última fila con datos de personas
   const rango = col => `Personas!$${col}$5:$${col}$${ultima}`;
-  const ESTADO_EXCEL = { recibido: 'Recibido', constancia: 'Constancia emitida', habilitado: 'Habilitado' };
+  const ESTADO_EXCEL = { recibido: 'Recibido', verificado: 'Verificado', constancia: 'Constancia emitida', habilitado: 'Habilitado' };
 
   // ---- Hoja Personas ----
   const cols = [
@@ -4317,7 +4327,7 @@ async function exportarExcel(){
   filas.forEach((f, k) => {
     const r = 5 + k, z = k % 2 === 1;
     const estadoTxt = ESTADO_EXCEL[f.r.estado] || f.r.estado || '';
-    const estadoEst = { recibido: E.recibido, constancia: E.constancia, habilitado: E.habilitado }[f.r.estado] || E.centro;
+    const estadoEst = { recibido: E.recibido, verificado: E.constancia, constancia: E.constancia, habilitado: E.habilitado }[f.r.estado] || E.centro;
     const valores = [
       f.r.folio, serialFechaHora(f.d.creado), serialFecha(f.d.fechaIngreso), f.d.tipo === 'grupo' ? 'Grupo' : 'Individual',
       f.d.actividad || '', f.d.lider ? f.d.lider.nombre : '', f.d.lider ? String(f.d.lider.telefono || '') : '',
@@ -4358,8 +4368,9 @@ async function exportarExcel(){
   const indicadores = [
     ['Personas registradas', { f: `COUNTA(${rango('A')})`, v: filas.length }, E.total],
     ['Habilitadas', { f: `COUNTIF(${rango('R')},"Habilitado")`, v: cuenta('habilitado') }, E.total],
-    ['Con constancia emitida', { f: `COUNTIF(${rango('R')},"Constancia emitida")`, v: cuenta('constancia') }, E.total],
-    ['Recibidas (sin constancia)', { f: `COUNTIF(${rango('R')},"Recibido")`, v: cuenta('recibido') }, E.total],
+    ['Verificadas (falta constancia)', { f: `COUNTIF(${rango('R')},"Verificado")`, v: cuenta('verificado') }, E.total],
+    ['Constancia emitida sin verificar', { f: `COUNTIF(${rango('R')},"Constancia emitida")`, v: cuenta('constancia') }, E.total],
+    ['Recibidas (por verificar)', { f: `COUNTIF(${rango('R')},"Recibido")`, v: cuenta('recibido') }, E.total],
     ['Edad promedio', { f: `IFERROR(ROUND(AVERAGE(${rango('L')}),1),0)`, v: edades.length ? Math.round(edades.reduce((a, b) => a + b, 0) / edades.length * 10) / 10 : 0 }, E.decimal],
     ['Personas sin teléfono', { f: `COUNTBLANK(${rango('M')})`, v: sinTel }, E.total],
   ];
