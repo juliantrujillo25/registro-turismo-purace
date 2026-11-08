@@ -3273,16 +3273,18 @@ async function imagenCabeceraPDF(){
 async function copiaPDF(core, fila){
   const L = [];
   L.push({ t: CONFIG.organizacion.toUpperCase() + ' · NIT ' + CONFIG.nit, s: 9 });
-  L.push({ t: t('sent.titulo'), s: 20, b: true, sep: 10 });
+  L.push({ t: t('sent.reciboTitulo'), s: 20, b: true, sep: 10 });
   L.push({ t: `${t('v.folio')}: ${core.folio}`, s: 14, b: true, sep: 8 });
   L.push({ t: `${t('v.fecha')}: ${fmtFechaHora(core.creado)}`, s: 11, sep: 4 });
-  L.push({ t: `${t('c.pdf.fecha')}: ${fmtFechaIso(core.fechaIngreso)}`, s: 11 });
-  if (core.actividad) L.push({ t: `${t('c.pdf.act')}: ${core.actividad}`, s: 11 });
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();   // las etiquetas de la constancia vienen en mayúsculas
+  L.push({ t: `${cap(t('c.pdf.fecha'))}: ${fmtFechaIso(core.fechaIngreso)}`, s: 11 });
+  if (core.actividad) L.push({ t: `${cap(t('c.pdf.act'))}: ${core.actividad}`, s: 11 });
   L.push({ t: `${t('sent.estado')}: ${t('sent.recibido')}`, s: 11, sep: 8 });
   L.push({ t: t('sent.texto', { tel: fila.contacto }), s: 11 });
   L.push({ t: core.tipo === 'grupo' ? t('c.integrantesReg') : t('c.personaReg'), s: 12, b: true, sep: 14 });
   core.personas.forEach((p, i) => L.push({ t: `${i + 1}. ${p.nombre}  ·  ${p.docTipo} ${p.docNumero}  ·  ${p.telefono || ''}`, s: 11 }));
   if (core.lider) L.push({ t: `${t('v.titular')}: ${core.lider.nombre}`, s: 11, sep: 6 });
+  L.push({ t: t('sent.reciboNota'), s: 10, sep: 22 });
   L.push({ t: CONFIG.resguardo + ' · ' + CONFIG.territorio, s: 8, sep: 30 });
   return pdfDesdeLineas(L, { cabecera: await imagenCabeceraPDF() });
 }
@@ -3293,6 +3295,33 @@ Object.assign(T.en, { 'f.expedida': 'Place of issue' });
 Object.assign(T.fr, { 'f.expedida': 'Lieu de délivrance' });
 Object.assign(T.pt, { 'f.expedida': 'Local de emissão' });
 Object.assign(T.de, { 'f.expedida': 'Ausstellungsort' });
+
+/* Recibo de registro en PDF (comprobante de que el Cabildo recibió el registro) */
+Object.assign(T.es, {
+  'sent.reciboBtn': 'Descargar recibo del registro (PDF)',
+  'sent.reciboTitulo': 'Recibo de registro de ingreso',
+  'sent.reciboNota': 'Este recibo comprueba que su registro fue recibido por el Cabildo. La constancia con código de verificación se emite después de verificar el pago y las condiciones.'
+});
+Object.assign(T.en, {
+  'sent.reciboBtn': 'Download registration receipt (PDF)',
+  'sent.reciboTitulo': 'Entry registration receipt',
+  'sent.reciboNota': 'This receipt shows that the Cabildo received your registration. The certificate with a verification code is issued after payment and conditions are verified.'
+});
+Object.assign(T.fr, {
+  'sent.reciboBtn': 'Télécharger le reçu d\'inscription (PDF)',
+  'sent.reciboTitulo': 'Reçu d\'enregistrement d\'entrée',
+  'sent.reciboNota': 'Ce reçu atteste que le Cabildo a reçu votre inscription. L\'attestation avec code de vérification est émise après la vérification du paiement et des conditions.'
+});
+Object.assign(T.pt, {
+  'sent.reciboBtn': 'Descarregar recibo do registo (PDF)',
+  'sent.reciboTitulo': 'Recibo de registo de entrada',
+  'sent.reciboNota': 'Este recibo comprova que o seu registo foi recebido pelo Cabildo. A declaração com código de verificação é emitida depois de verificados o pagamento e as condições.'
+});
+Object.assign(T.de, {
+  'sent.reciboBtn': 'Anmeldebestätigung herunterladen (PDF)',
+  'sent.reciboTitulo': 'Quittung der Einreiseregistrierung',
+  'sent.reciboNota': 'Diese Quittung bestätigt, dass der Cabildo Ihre Registrierung erhalten hat. Die Bescheinigung mit Prüfcode wird nach der Prüfung von Zahlung und Bedingungen ausgestellt.'
+});
 
 /* Constancia: guía y guardia que acompaña */
 Object.assign(T.es, { 'c.guia': 'Guía', 'c.guardia': 'Guardia indígena que acompaña' });
