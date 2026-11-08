@@ -46,7 +46,7 @@ button{font:inherit;cursor:pointer}
 .check + .check{margin-top:2px}
 .tri{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.2fr);gap:10px}
 .tri label{min-width:0}
-.tri label > span{min-height:34px;display:flex;align-items:flex-end;line-height:1.2}
+.tri label > span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
 .tri select,.tri input{min-width:0;width:100%}
 .check input{width:22px;height:22px;margin:2px 0 0;flex:0 0 auto}
 .pad{display:block;width:100%;height:150px;background:#fff;border:1.5px dashed #b9b09c;border-radius:10px;touch-action:none}
@@ -3147,11 +3147,11 @@ async function copiaPDF(core, fila){
 }
 
 /* Campo nuevo del formulario: lugar de expedición del documento (para el acta) */
-Object.assign(T.es, { 'f.expedida': 'Lugar de expedición del documento' });
-Object.assign(T.en, { 'f.expedida': 'Place where the document was issued' });
-Object.assign(T.fr, { 'f.expedida': 'Lieu de délivrance du document' });
-Object.assign(T.pt, { 'f.expedida': 'Local de emissão do documento' });
-Object.assign(T.de, { 'f.expedida': 'Ausstellungsort des Dokuments' });
+Object.assign(T.es, { 'f.expedida': 'Lugar de expedición' });
+Object.assign(T.en, { 'f.expedida': 'Place of issue' });
+Object.assign(T.fr, { 'f.expedida': 'Lieu de délivrance' });
+Object.assign(T.pt, { 'f.expedida': 'Local de emissão' });
+Object.assign(T.de, { 'f.expedida': 'Ausstellungsort' });
 
 /* Constancia: guía y guardia que acompaña */
 Object.assign(T.es, { 'c.guia': 'Guía', 'c.guardia': 'Guardia indígena que acompaña' });
