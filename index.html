@@ -3644,7 +3644,7 @@ function pdfEnsamblar(paginas, imagenes){
     const im = imagenes[n];
     let bin = '';
     for (let i = 0; i < im.datos.length; i += 8192) bin += String.fromCharCode.apply(null, im.datos.subarray(i, i + 8192));
-    objs.push(`<< /Type /XObject /Subtype /Image /Width ${im.w} /Height ${im.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode /Length ${bin.length} >>\nstream\n${bin}\nendstream`);
+    objs.push(`<< /Type /XObject /Subtype /Image /Width ${im.w} /Height ${im.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /${im.filtro || 'FlateDecode'} /Length ${bin.length} >>\nstream\n${bin}\nendstream`);
   });
   let pdf = '%PDF-1.4\n%\xe2\xe3\xcf\xd3\n';
   const offs = [];
@@ -3670,10 +3670,25 @@ async function imagenParaPDF(fuente, pxW, pxH){
   const datos = new Uint8Array(await new Response(new Blob([rgb]).stream().pipeThrough(new CompressionStream('deflate'))).arrayBuffer());
   return { w: pxW, h: pxH, datos };
 }
+// Los logos van como JPEG comprimido (calidad 0,86) y a un tamaño suficiente para pantalla e impresión: el PDF pesa mucho menos
+async function jpegDesdeCanvas(cv, calidad){
+  const blob = await new Promise(r => cv.toBlob(r, 'image/jpeg', calidad));
+  return new Uint8Array(await blob.arrayBuffer());
+}
+async function imagenJpegPDF(fuente, pxW, pxH, calidad = 0.86){
+  const img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => rej(new Error('imagen no válida')); im.src = fuente; });
+  const cv = document.createElement('canvas'); cv.width = pxW; cv.height = pxH;
+  const c = cv.getContext('2d');
+  c.fillStyle = '#ffffff'; c.fillRect(0, 0, pxW, pxH);
+  c.imageSmoothingQuality = 'high';
+  const k = Math.min(pxW / img.width, pxH / img.height);
+  c.drawImage(img, (pxW - img.width * k) / 2, (pxH - img.height * k) / 2, img.width * k, img.height * k);
+  return { w: pxW, h: pxH, datos: await jpegDesdeCanvas(cv, calidad), filtro: 'DCTDecode' };
+}
 async function logosParaPDF(){
   return {
-    Cabildo: await imagenParaPDF(LOGO_CABILDO, 400, 372),
-    Turismo: await imagenParaPDF(LOGO_PURACE_COLOR, 640, 231),
+    Cabildo: await imagenJpegPDF(LOGO_CABILDO, 230, 214),
+    Turismo: await imagenJpegPDF(LOGO_PURACE_COLOR, 400, 144),
   };
 }
 // Silueta sobre fondo negro → silueta del mismo color sobre fondo blanco, conservando el borde suave
@@ -3690,21 +3705,21 @@ async function imagenSiluetaParaPDF(fuente, pxW, pxH){
   if (!n){ sr = 23; sg = 55; sb = 94; n = 1; }
   sr /= n; sg /= n; sb /= n;
   const suma = sr + sg + sb;
-  const rgb = new Uint8Array(pxW * pxH * 3);
-  for (let i = 0, j = 0; i < px.length; i += 4, j += 3){
+  const salida = c.createImageData(pxW, pxH);
+  for (let i = 0; i < px.length; i += 4){
     const cob = Math.min(1, (px[i] + px[i + 1] + px[i + 2]) / suma);   // cuánto de la silueta hay en el píxel
-    rgb[j] = 255 - cob * (255 - sr); rgb[j + 1] = 255 - cob * (255 - sg); rgb[j + 2] = 255 - cob * (255 - sb);
+    salida.data[i] = 255 - cob * (255 - sr); salida.data[i + 1] = 255 - cob * (255 - sg); salida.data[i + 2] = 255 - cob * (255 - sb); salida.data[i + 3] = 255;
   }
-  const datos = new Uint8Array(await new Response(new Blob([rgb]).stream().pipeThrough(new CompressionStream('deflate'))).arrayBuffer());
-  return { w: pxW, h: pxH, datos };
+  c.putImageData(salida, 0, 0);
+  return { w: pxW, h: pxH, datos: await jpegDesdeCanvas(cv, 0.88), filtro: 'DCTDecode' };
 }
 async function logosActaPDF(){
   return {
-    Colombia: await imagenParaPDF(LOGO_COLOMBIA, 336, 430),
-    Cabildo: await imagenParaPDF(LOGO_CABILDO, 400, 372),
-    Turismo: await imagenParaPDF(LOGO_PURACE_COLOR, 640, 231),
-    Danta: await imagenSiluetaParaPDF(SIL_DANTA, 420, 400),
-    Armadillo: await imagenSiluetaParaPDF(SIL_ARMADILLO, 308, 202),
+    Colombia: await imagenJpegPDF(LOGO_COLOMBIA, 190, 243),
+    Cabildo: await imagenJpegPDF(LOGO_CABILDO, 230, 214),
+    Turismo: await imagenJpegPDF(LOGO_PURACE_COLOR, 400, 144),
+    Danta: await imagenSiluetaParaPDF(SIL_DANTA, 180, 171),
+    Armadillo: await imagenSiluetaParaPDF(SIL_ARMADILLO, 231, 152),
   };
 }
 
