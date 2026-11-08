@@ -112,14 +112,8 @@ footer{font-size:12px;color:var(--muted);text-align:center;padding:0 16px 24px}
 
     <div class="card">
       <h2 data-i18n="sec.acta">Acta de corresponsabilidad</h2>
-      <div class="legal">
-        <p data-i18n="leg1"></p>
-        <p data-i18n="leg2"></p>
-        <p data-i18n="leg3"></p>
-        <p data-i18n="leg4"></p>
-        <p data-i18n="leg5"></p>
-        <p data-i18n="leg6"></p>
-      </div>
+      <div class="legal" id="actaOficial"></div>
+      <p class="nota-p" data-i18n="leg6"></p>
       <label class="check"><input type="checkbox" id="acepto"><span data-i18n="acepto">Leí y acepto el acta. Cada persona registrada firma en su propio recuadro.</span></label>
       <label class="check"><input type="checkbox" id="consent"><span data-i18n="consent">Autorizo al Cabildo Indígena de Puracé a tratar mis datos personales y de salud.</span></label>
     </div>
@@ -3619,6 +3613,18 @@ async function imagenParaPDF(fuente, pxW, pxH){
   return { w: pxW, h: pxH, datos };
 }
 
+// Texto oficial de la declaración del acta (el mismo que se muestra en el formulario y sale en el PDF)
+const ACTA_PARRAFOS = [
+  'Expreso mi libre deseo y voluntad de ingresar al territorio ancestral de la Comunidad Indígena de Puracé, Pueblo Kokonuko, bajo mi propia responsabilidad y riesgo, entendiendo que se trata de un ecosistema de alta montaña, páramo y zona de influencia volcánica, con condiciones climáticas extremas, senderos irregulares y flora y fauna silvestre. Declaro que he sido informado(a) de los riesgos inherentes a las actividades turísticas, senderismo, termalismo y avistamiento.',
+  'Teniendo en cuenta lo anterior me comprometo a:',
+  '- Acatar y respetar las orientaciones, decisiones y reglamentos de las Autoridades Tradicionales del Resguardo Indígena de Puracé, guías locales y del Comité de Turismo.',
+  '- No extraer, alterar ni dañar flora, fauna, fuentes hídricas, piedras, ni elementos culturales o sagrados.',
+  '- Transitar únicamente por los senderos autorizados, no consumir bebidas alcohólicas ni sustancias psicoactivas durante el recorrido, y gestionar adecuadamente mis residuos.',
+  '- Asumir todos los costos y consecuencias derivados de cualquier accidente, pérdida, lesión o daño que pueda sufrir durante mi permanencia, exonerando de responsabilidad a la comunidad.',
+  'Nota Alerta Amarilla Cadena Volcánica los Kokonukos: De acuerdo con el Servicio Geológico Colombiano, la cadena volcánica de los Kokonukos se encuentra en nivel de actividad AMARILLA, lo que implica cambios en el comportamiento volcánico, posible emisión de gases, ceniza y sismicidad. El ingreso se autoriza de forma condicionada y puede ser suspendido en cualquier momento por las Autoridades Tradicionales sin derecho a reembolso.',
+  'Autorizo a las Autoridades Tradicionales del Resguardo Indígena de Puracé y al Comité de Turismo a tomar las decisiones necesarias para salvaguardar mi integridad, incluyendo la evacuación, y autorizo el tratamiento de mis datos personales conforme a la Ley 1581 de 2012.',
+];
+
 // Líneas del acta para una persona. El texto es el de la acta de corresponsabilidad del Cabildo.
 function lineasActa(datos, p, fechaCol, folio, nombreFirma, numeroActa){
   const AZUL = '0 0.333 0.518';
@@ -3636,16 +3642,7 @@ function lineasActa(datos, p, fechaCol, folio, nombreFirma, numeroActa){
   const tipoDoc = DOC_NOMBRE_ACTA[p.docTipo] || p.docTipo || 'CC';
   L.push({ t: `1. Yo, ${txt(p.nombre, '____________________')} con edad de ${txt(p.edad, '____')} años, identificado(a) con ${tipoDoc} número ${txt(p.docNumero, '____________')} expedida en ${txt(p.expedida)} con domicilio en ${txt(p.residencia)} con teléfono de contacto ${txt(p.telefono, '____________')}.`, s: 8.5, sep: 10 });
   L.push({ t: '2. DECLARACIONES:', s: 8.5, b: true, sep: 8 });
-  const parrafos = [
-    'Expreso mi libre deseo y voluntad de ingresar al territorio ancestral de la Comunidad Indígena de Puracé, Pueblo Kokonuko, bajo mi propia responsabilidad y riesgo, entendiendo que se trata de un ecosistema de alta montaña, páramo y zona de influencia volcánica, con condiciones climáticas extremas, senderos irregulares y flora y fauna silvestre. Declaro que he sido informado(a) de los riesgos inherentes a las actividades turísticas, senderismo, termalismo y avistamiento.',
-    'Teniendo en cuenta lo anterior me comprometo a:',
-    '- Acatar y respetar las orientaciones, decisiones y reglamentos de las Autoridades Tradicionales del Resguardo Indígena de Puracé, guías locales y del Comité de Turismo.',
-    '- No extraer, alterar ni dañar flora, fauna, fuentes hídricas, piedras, ni elementos culturales o sagrados.',
-    '- Transitar únicamente por los senderos autorizados, no consumir bebidas alcohólicas ni sustancias psicoactivas durante el recorrido, y gestionar adecuadamente mis residuos.',
-    '- Asumir todos los costos y consecuencias derivados de cualquier accidente, pérdida, lesión o daño que pueda sufrir durante mi permanencia, exonerando de responsabilidad a la comunidad.',
-    'Nota Alerta Amarilla Cadena Volcánica los Kokonukos: De acuerdo con el Servicio Geológico Colombiano, la cadena volcánica de los Kokonukos se encuentra en nivel de actividad AMARILLA, lo que implica cambios en el comportamiento volcánico, posible emisión de gases, ceniza y sismicidad. El ingreso se autoriza de forma condicionada y puede ser suspendido en cualquier momento por las Autoridades Tradicionales sin derecho a reembolso.',
-    'Autorizo a las Autoridades Tradicionales del Resguardo Indígena de Puracé y al Comité de Turismo a tomar las decisiones necesarias para salvaguardar mi integridad, incluyendo la evacuación, y autorizo el tratamiento de mis datos personales conforme a la Ley 1581 de 2012.',
-  ];
+  const parrafos = ACTA_PARRAFOS;
   parrafos.forEach((t, i) => L.push({ t, s: 8.5, sep: i === 0 ? 4 : 3 }));
   L.push({ t: `3. Autorizo a informar a Familiar/Amigo ${txt(p.emNombre, '____________________')} cuyo número es ${txt(p.emTelefono, '____________')}`, s: 8.5, sep: 10 });
   L.push({ t: `4. Observaciones: ${txt(p.salud, 'ninguna')}`, s: 8.5, sep: 6 });
@@ -3970,6 +3967,8 @@ function cambiarIdioma(nuevo){
    INICIO
    ============================================================ */
 function init(){
+  // El texto oficial del acta (el mismo que se imprime en el PDF)
+  $('#actaOficial').innerHTML = ACTA_PARRAFOS.map(p => `<p>${esc(p)}</p>`).join('');
   DB.iniciar();
   lang = idiomaInicial();
   document.documentElement.lang = lang;
