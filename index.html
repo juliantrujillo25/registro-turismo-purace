@@ -3054,8 +3054,10 @@ Object.assign(T.de, {
 
 /* PDF sencillo para la copia del visitante: texto con Helvetica, sin librerías externas.
    Las líneas se envuelven y se pasan a otra página si no caben. */
-function pdfDesdeLineas(lineas){
+function pdfDesdeLineas(lineas, opciones = {}){
   const W = 595, H = 842, M = 54;
+  const cab = opciones.cabecera || null;   // franja superior con imagen (solo en la primera página)
+  const cabH = cab ? cab.alto : 0;
   const WIN = { '€': 0x80, '‚': 0x82, 'ƒ': 0x83, '„': 0x84, '…': 0x85, '†': 0x86, '‡': 0x87, '‘': 0x91, '’': 0x92, '“': 0x93, '”': 0x94, '•': 0x95, '–': 0x96, '—': 0x97, '™': 0x99 };
   const codificar = s => { let o = ''; for (const ch of String(s)){ const b = WIN[ch] ?? (ch.codePointAt(0) < 256 ? ch.codePointAt(0) : 63); o += String.fromCharCode(b); } return o; };
   const escapar = s => s.replace(/[\\()]/g, m => '\\' + m);
@@ -3069,7 +3071,9 @@ function pdfDesdeLineas(lineas){
     out.push(cur);
     return out;
   };
-  const paginas = []; let ops = []; let y = H - M;
+  const paginas = [];
+  let ops = cab ? [`q ${W} 0 0 ${cabH} 0 ${H - cabH} cm /Im1 Do Q`] : [];
+  let y = cab ? H - cabH - 30 : H - M;
   for (const L of lineas){
     if (L.sep) y -= L.sep;
     const size = L.s || 11, alto = size * 1.5;
@@ -3086,10 +3090,17 @@ function pdfDesdeLineas(lineas){
   objs.push(`<< /Type /Pages /Kids [${paginas.map((_, i) => `${5 + 2 * i} 0 R`).join(' ')}] /Count ${paginas.length} >>`);
   objs.push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
   objs.push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+  const idImagen = 5 + 2 * paginas.length;
+  const recursosXO = cab ? ` /XObject << /Im1 ${idImagen} 0 R >>` : '';
   paginas.forEach((contenido, i) => {
-    objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${6 + 2 * i} 0 R >>`);
+    objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >>${recursosXO} >> /Contents ${6 + 2 * i} 0 R >>`);
     objs.push(`<< /Length ${contenido.length} >>\nstream\n${contenido}\nendstream`);
   });
+  if (cab){
+    let bin = '';
+    for (let i = 0; i < cab.datos.length; i += 8192) bin += String.fromCharCode.apply(null, cab.datos.subarray(i, i + 8192));
+    objs.push(`<< /Type /XObject /Subtype /Image /Width ${cab.w} /Height ${cab.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode /Length ${bin.length} >>\nstream\n${bin}\nendstream`);
+  }
 
   let pdf = '%PDF-1.4\n%\xe2\xe3\xcf\xd3\n';
   const offs = [];
@@ -3101,8 +3112,25 @@ function pdfDesdeLineas(lineas){
   return new Blob([Uint8Array.from(pdf, ch => ch.charCodeAt(0))], { type: 'application/pdf' });
 }
 
+/* Imagen de la franja superior del PDF: degradado azul + logo, comprimida (zlib) para PDF */
+async function imagenCabeceraPDF(){
+  if (typeof CompressionStream === 'undefined') return null;
+  await cargarLogo();
+  const w = 1190, h = 220;
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const c = cv.getContext('2d');
+  const g = c.createLinearGradient(0, 0, w, h); g.addColorStop(0, '#005584'); g.addColorStop(1, '#1b8fb5');
+  c.fillStyle = g; c.fillRect(0, 0, w, h);
+  if (LOGO_IMG){ const lw = 360, lh = 360 * LOGO_IMG.height / LOGO_IMG.width; c.drawImage(LOGO_IMG, 60, (h - lh) / 2, lw, lh); }
+  const px = c.getImageData(0, 0, w, h).data;
+  const rgb = new Uint8Array(w * h * 3);
+  for (let i = 0, j = 0; i < px.length; i += 4, j += 3){ rgb[j] = px[i]; rgb[j + 1] = px[i + 1]; rgb[j + 2] = px[i + 2]; }
+  const comprimido = new Uint8Array(await new Response(new Blob([rgb]).stream().pipeThrough(new CompressionStream('deflate'))).arrayBuffer());
+  return { w, h, datos: comprimido, alto: 110 };
+}
+
 /* Copia en PDF del registro que acaba de enviar el visitante */
-function copiaPDF(core, fila){
+async function copiaPDF(core, fila){
   const L = [];
   L.push({ t: CONFIG.organizacion.toUpperCase() + ' · NIT ' + CONFIG.nit, s: 9 });
   L.push({ t: t('sent.titulo'), s: 20, b: true, sep: 10 });
@@ -3116,7 +3144,7 @@ function copiaPDF(core, fila){
   core.personas.forEach((p, i) => L.push({ t: `${i + 1}. ${p.nombre}  ·  ${p.docTipo} ${p.docNumero}  ·  ${p.telefono || ''}`, s: 11 }));
   if (core.lider) L.push({ t: `${t('v.titular')}: ${core.lider.nombre}`, s: 11, sep: 6 });
   L.push({ t: CONFIG.resguardo + ' · ' + CONFIG.territorio, s: 8, sep: 30 });
-  return pdfDesdeLineas(L);
+  return pdfDesdeLineas(L, { cabecera: await imagenCabeceraPDF() });
 }
 
 /* Constancia: guía y guardia que acompaña */
@@ -3646,9 +3674,10 @@ function descargarCopia(){
   descargar(new Blob([JSON.stringify(copia, null, 2)], { type: 'application/json' }), `${core.folio}.json`);
 }
 
-function descargarCopiaPDF(){
+async function descargarCopiaPDF(){
   const { core, fila } = ultimo;
-  descargar(copiaPDF(core, fila), `${core.folio}.pdf`);
+  try { descargar(await copiaPDF(core, fila), `${core.folio}.pdf`); }
+  catch (e) { mostrarMsg('#msgEnv', 'err', 'No se pudo generar el PDF: ' + e.message); }
 }
 
 function respaldo(){
