@@ -3751,7 +3751,8 @@ function pintarDetalle(){
       ${conCodigo
         ? `<label style="flex-direction:row;align-items:center;gap:8px;font-weight:600"><input type="checkbox" id="chkPago" ${fila.pago_verificado ? 'checked' : ''}> Pago verificado</label>
            <label style="flex-direction:row;align-items:center;gap:8px;font-weight:600;margin-top:6px"><input type="checkbox" id="chkCond" ${fila.condiciones_verificadas ? 'checked' : ''}> Condiciones verificadas (acta firmada, salud y contacto de emergencia)</label>
-           <label style="margin-top:8px">Notas<textarea id="notas" rows="2">${esc(fila.notas || '')}</textarea></label>
+           <label style="display:block;margin-top:14px;font-weight:700">Observaciones
+             <textarea id="notas" rows="5" style="display:block;width:100%;min-height:130px;margin-top:6px;resize:vertical" placeholder="Escriba aquí las observaciones de la verificación">${esc(fila.notas || '')}</textarea></label>
            <div class="acciones" style="margin-top:8px"><button class="btn" type="button" id="btnGuardarVerif">Guardar verificación</button></div>
            <p class="nota-p">Con ambas casillas marcadas, el registro queda <b>Habilitado</b>.</p>`
         : `<p class="nota-p">Primero emita la constancia y después verifique el pago y las condiciones.</p>`}
