@@ -3286,11 +3286,11 @@ async function copiaPDF(core, fila){
 }
 
 /* Campo nuevo del formulario: lugar de expedición del documento (para el acta) */
-Object.assign(T.es, { 'f.expedida': 'Lugar de expedición del documento' });
-Object.assign(T.en, { 'f.expedida': 'Place where the document was issued' });
-Object.assign(T.fr, { 'f.expedida': 'Lieu de délivrance du document' });
-Object.assign(T.pt, { 'f.expedida': 'Local de emissão do documento' });
-Object.assign(T.de, { 'f.expedida': 'Ausstellungsort des Dokuments' });
+Object.assign(T.es, { 'f.expedida': 'Lugar de expedición' });
+Object.assign(T.en, { 'f.expedida': 'Place of issue' });
+Object.assign(T.fr, { 'f.expedida': 'Lieu de délivrance' });
+Object.assign(T.pt, { 'f.expedida': 'Local de emissão' });
+Object.assign(T.de, { 'f.expedida': 'Ausstellungsort' });
 
 /* Constancia: guía y guardia que acompaña */
 Object.assign(T.es, { 'c.guia': 'Guía', 'c.guardia': 'Guardia indígena que acompaña' });
@@ -3918,6 +3918,7 @@ function pintarDetalle(){
           ${guias.map(g => `<option value="${g.id}" ${String(fila.guia_id) === String(g.id) ? 'selected' : ''}>${esc(g.nombre)}${g.tarjeta_profesional ? ' · ' + esc(g.tarjeta_profesional) : ''}</option>`).join('')}
         </select>
         <button class="btn sec" type="button" id="btnGuia">Guardar guía</button>
+        <span id="estadoGuia" class="nota-p" style="margin:0"></span>
       </div>
       <div style="margin-top:10px">
         <div class="dato">Guardia indígena que acompaña (si no es el guía)</div>
@@ -3958,6 +3959,22 @@ function pintarDetalle(){
   on('#btnWa', enviarVisitante);
   on('#btnGuardarVerif', guardarVerificacion);
   on('#btnGuia', guardarGuia);
+  // El guía y el guardia se guardan solos al salir del campo, para no perderlos al pasar a otro paso
+  const auto = () => guardarGuiaSilencioso().catch(e => { const est = $('#estadoGuia'); if (est) est.textContent = 'No se pudo guardar: ' + e.message; });
+  if ($('#selGuia')) $('#selGuia').onchange = auto;
+  if ($('#txtGuardia')) { $('#txtGuardia').onchange = auto; $('#txtGuardia').onblur = auto; }
+}
+
+// Guarda el guía y el guardia si cambiaron, sin volver a dibujar el detalle (no se pierde lo escrito)
+async function guardarGuiaSilencioso(){
+  if (!detalle || !$('#selGuia') || !$('#txtGuardia')) return;
+  const { fila } = detalle;
+  const guia_id = $('#selGuia').value ? Number($('#selGuia').value) : null;
+  const guardia_nombre = $('#txtGuardia').value.trim();
+  if ((fila.guia_id ?? null) === guia_id && (fila.guardia_nombre || '') === guardia_nombre) return;
+  await DB.actualizar(fila.folio, { guia_id, guardia_nombre });
+  Object.assign(fila, { guia_id, guardia_nombre });
+  const est = $('#estadoGuia'); if (est) est.textContent = '✓ Guardado';
 }
 
 async function guardarGuia(){
@@ -3977,6 +3994,7 @@ async function emitirConstancia(){
   const { fila, datos } = detalle;
   if (!confirm(`¿Emitir la constancia del folio ${fila.folio}? Se generará su código de verificación y los datos quedarán bloqueados.`)) return;
   try {
+    await guardarGuiaSilencioso();   // no perder el guía ni el guardia escritos
     const codigo = await codigoDe(datos);
     const constancia_at = new Date().toISOString();
     await DB.actualizar(fila.folio, { codigo, constancia_at, estado: 'constancia' });
@@ -3991,6 +4009,7 @@ async function guardarVerificacion(){
   const pago = $('#chkPago').checked, cond = $('#chkCond').checked, notas = $('#notas').value.trim();
   const estado = pago && cond ? 'habilitado' : 'constancia';
   try {
+    await guardarGuiaSilencioso();
     await DB.actualizar(fila.folio, { pago_verificado: pago, condiciones_verificadas: cond, notas, estado });
     Object.assign(fila, { pago_verificado: pago, condiciones_verificadas: cond, notas, estado });
     await cargar();
@@ -4522,6 +4541,8 @@ function init(){
     const tr = e.target.closest('tr[data-folio]'); if (tr) abrirDetalle(tr.dataset.folio);
   });
   $('#dlgCerrar').onclick = () => $('#dlg').close();
+  // Al cerrar el detalle (botón o tecla Esc) se guarda lo pendiente del guía y el guardia y se refresca la lista
+  $('#dlg').addEventListener('close', () => { guardarGuiaSilencioso().then(cargar).catch(() => {}); });
   $('#dlgJson').onclick = descargarJson;
   $('#dlgActa').onclick = () => verActa(detalle.fila.folio);
   $('#btnVerificar').onclick = () => verificarEntrada($('#verEntrada').value);
