@@ -258,7 +258,8 @@ dialog::backdrop{background:rgba(15,23,42,.55)}
     <section class="card">
       <h2>4. Exportar e importar</h2>
       <div class="acciones">
-        <button class="btn sec" id="btnCsvPersonas" type="button">Exportar personas (Excel/CSV)</button>
+        <button class="btn" id="btnExcel" type="button">Excel con diseño y fórmulas (.xlsx)</button>
+        <button class="btn sec" id="btnCsvPersonas" type="button">Exportar personas (CSV)</button>
         <button class="btn sec" id="btnCsvConstancias" type="button">Exportar constancias (CSV)</button>
         <button class="btn sec" id="btnRespaldo" type="button">Respaldo completo (.json)</button>
       </div>
@@ -3968,6 +3969,246 @@ async function verificarEntrada(texto){
   else aviso(res, 'err', `<b>✘ No coincide.</b> El código no corresponde al registro <b class="folio">${esc(folio)}</b>.`);
 }
 
+/* ---------- Excel con diseño (.xlsx, sin librerías) ---------- */
+const CRC_TABLA = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++){ let c = n; for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; }
+  return t;
+})();
+const crc32 = bytes => { let c = 0xFFFFFFFF; for (let i = 0; i < bytes.length; i++) c = CRC_TABLA[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+const u16 = n => [n & 0xFF, (n >>> 8) & 0xFF];
+const u32 = n => [n & 0xFF, (n >>> 8) & 0xFF, (n >>> 16) & 0xFF, (n >>> 24) & 0xFF];
+function zipSinComprimir(archivos){
+  const enc = new TextEncoder(), partes = [], central = [];
+  let offset = 0;
+  for (const a of archivos){
+    const nombre = enc.encode(a.nombre), datos = a.datos, crc = crc32(datos);
+    const cab = Uint8Array.from([...u32(0x04034b50), ...u16(20), ...u16(0), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(datos.length), ...u32(datos.length), ...u16(nombre.length), ...u16(0)]);
+    partes.push(cab, nombre, datos);
+    central.push({ nombre, crc, tam: datos.length, offset });
+    offset += cab.length + nombre.length + datos.length;
+  }
+  const cdIni = offset; let cdTam = 0;
+  for (const c of central){
+    const cab = Uint8Array.from([...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0), ...u16(0), ...u16(0), ...u16(0x21), ...u32(c.crc), ...u32(c.tam), ...u32(c.tam), ...u16(c.nombre.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(c.offset)]);
+    partes.push(cab, c.nombre); cdTam += cab.length + c.nombre.length;
+  }
+  partes.push(Uint8Array.from([...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(central.length), ...u16(central.length), ...u32(cdTam), ...u32(cdIni), ...u16(0)]));
+  return new Blob(partes, { type: 'application/zip' });
+}
+
+const XF = [], FUENTES = [
+  { sz: 11, color: 'FF1F2D3A' }, { b: 1, sz: 16, color: 'FFFFFFFF' }, { i: 1, sz: 10, color: 'FF64748B' },
+  { b: 1, sz: 11, color: 'FFFFFFFF' }, { b: 1, sz: 11, color: 'FF0F2A3D' }, { b: 1, sz: 11, color: 'FF166534' },
+  { b: 1, sz: 11, color: 'FF8A5A00' }, { b: 1, sz: 11, color: 'FF374151' }, { b: 1, sz: 12, color: 'FF005584' },
+];
+const RELLENOS = ['', '', 'FF005584', 'FFF4F8FB', 'FFD9F2C6', 'FFFDE9C4', 'FFE5E7EB', 'FFE0ECF5'];
+const estilo = o => { const k = JSON.stringify(o); let i = XF.findIndex(x => JSON.stringify(x) === k); if (i < 0){ XF.push(o); i = XF.length - 1; } return i; };
+// Formatos: 164 fecha, 165 fecha y hora, 166 decimal; 1 entero y 9 porcentaje (integrados)
+const E = {
+  base: estilo({ n: 0, f: 0, fl: 0, b: 0 }),
+  titulo: estilo({ f: 1, fl: 2, b: 0, h: 'left', v: 'center' }),
+  subtitulo: estilo({ f: 2, h: 'left', v: 'center' }),
+  seccion: estilo({ f: 8, h: 'left', v: 'center' }),
+  cabecera: estilo({ f: 3, fl: 2, b: 1, h: 'center', v: 'center', w: 1 }),
+  texto: estilo({ f: 0, b: 1, h: 'left', v: 'center' }),
+  textoZ: estilo({ f: 0, fl: 3, b: 1, h: 'left', v: 'center' }),
+  centro: estilo({ f: 0, b: 1, h: 'center', v: 'center' }),
+  centroZ: estilo({ f: 0, fl: 3, b: 1, h: 'center', v: 'center' }),
+  fecha: estilo({ n: 164, f: 0, b: 1, h: 'center', v: 'center' }),
+  fechaZ: estilo({ n: 164, f: 0, fl: 3, b: 1, h: 'center', v: 'center' }),
+  fechaHora: estilo({ n: 165, f: 0, b: 1, h: 'center', v: 'center' }),
+  fechaHoraZ: estilo({ n: 165, f: 0, fl: 3, b: 1, h: 'center', v: 'center' }),
+  entero: estilo({ n: 1, f: 0, b: 1, h: 'center', v: 'center' }),
+  enteroZ: estilo({ n: 1, f: 0, fl: 3, b: 1, h: 'center', v: 'center' }),
+  decimal: estilo({ n: 166, f: 0, b: 1, h: 'center', v: 'center' }),
+  porcentaje: estilo({ n: 9, f: 0, b: 1, h: 'center', v: 'center' }),
+  habilitado: estilo({ f: 5, fl: 4, b: 1, h: 'center', v: 'center' }),
+  constancia: estilo({ f: 6, fl: 5, b: 1, h: 'center', v: 'center' }),
+  recibido: estilo({ f: 7, fl: 6, b: 1, h: 'center', v: 'center' }),
+  total: estilo({ f: 4, fl: 7, b: 1, h: 'center', v: 'center' }),
+  totalTexto: estilo({ f: 4, fl: 7, b: 1, h: 'left', v: 'center' }),
+  totalPorc: estilo({ n: 9, f: 4, fl: 7, b: 1, h: 'center', v: 'center' }),
+};
+function estilosXml(){
+  const fuentes = FUENTES.map(f => `<font>${f.b ? '<b/>' : ''}${f.i ? '<i/>' : ''}<sz val="${f.sz}"/><color rgb="${f.color}"/><name val="Calibri"/><family val="2"/></font>`).join('');
+  const rell = RELLENOS.map((c, i) => i < 2 ? (i === 0 ? '<fill><patternFill patternType="none"/></fill>' : '<fill><patternFill patternType="gray125"/></fill>')
+    : `<fill><patternFill patternType="solid"><fgColor rgb="${c}"/><bgColor indexed="64"/></patternFill></fill>`).join('');
+  const borde = '<border><left style="thin"><color rgb="FFD6DEE6"/></left><right style="thin"><color rgb="FFD6DEE6"/></right><top style="thin"><color rgb="FFD6DEE6"/></top><bottom style="thin"><color rgb="FFD6DEE6"/></bottom><diagonal/></border>';
+  const xfs = XF.map(o => `<xf numFmtId="${o.n || 0}" fontId="${o.f || 0}" fillId="${o.fl || 0}" borderId="${o.b || 0}" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment${o.h ? ` horizontal="${o.h}"` : ''}${o.v ? ` vertical="${o.v}"` : ''}${o.w ? ' wrapText="1"' : ''}/></xf>`).join('');
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<numFmts count="3"><numFmt numFmtId="164" formatCode="dd/mm/yyyy"/><numFmt numFmtId="165" formatCode="dd/mm/yyyy hh:mm"/><numFmt numFmtId="166" formatCode="0.0"/></numFmts>
+<fonts count="${FUENTES.length}">${fuentes}</fonts>
+<fills count="${RELLENOS.length}">${rell}</fills>
+<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>${borde}</borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="${XF.length}">${xfs}</cellXfs>
+<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+</styleSheet>`;
+}
+
+const xmlEsc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const colLetra = n => { let s = ''; n++; while (n > 0){ const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };
+// Valor: texto, número, null (celda vacía) o { f: 'FORMULA', v: valor en caché }
+function celda(ref, valor, estiloId){
+  if (valor === null || valor === undefined || valor === '') return `<c r="${ref}" s="${estiloId}"/>`;
+  if (typeof valor === 'object' && valor.f){
+    const cache = valor.v;
+    if (typeof cache === 'string') return `<c r="${ref}" s="${estiloId}" t="str"><f>${xmlEsc(valor.f)}</f><v>${xmlEsc(cache)}</v></c>`;
+    return `<c r="${ref}" s="${estiloId}"><f>${xmlEsc(valor.f)}</f>${cache !== undefined ? `<v>${cache}</v>` : ''}</c>`;
+  }
+  if (typeof valor === 'number' && isFinite(valor)) return `<c r="${ref}" s="${estiloId}"><v>${valor}</v></c>`;
+  return `<c r="${ref}" s="${estiloId}" t="inlineStr"><is><t xml:space="preserve">${xmlEsc(valor)}</t></is></c>`;
+}
+const serialFecha = iso => { if (!iso) return null; const [y, m, d] = iso.split('-').map(Number); return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(1899, 11, 30)) / 86400000); };
+const serialFechaHora = iso => { if (!iso) return null; const x = new Date(iso); return (Date.UTC(x.getFullYear(), x.getMonth(), x.getDate(), x.getHours(), x.getMinutes()) - Date.UTC(1899, 11, 30)) / 86400000; };
+
+async function exportarExcel(){
+  const todos = await DB.todos();
+  const filas = [];
+  todos.forEach(r => { const d = r.datos; if (!d || !d.personas) return; d.personas.forEach((p, i) => filas.push({ r, d, p, i })); });
+  filas.sort((a, b) => (a.d.fechaIngreso || '').localeCompare(b.d.fechaIngreso || '') || a.r.folio.localeCompare(b.r.folio) || a.i - b.i);
+  const ultima = Math.max(4 + filas.length, 5);   // última fila con datos de personas
+  const rango = col => `Personas!$${col}$5:$${col}$${ultima}`;
+  const ESTADO_EXCEL = { recibido: 'Recibido', constancia: 'Constancia emitida', habilitado: 'Habilitado' };
+
+  // ---- Hoja Personas ----
+  const cols = [
+    ['Folio', 16, 'texto'], ['Recibido', 17, 'fechaHora'], ['Fecha de ingreso', 14, 'fecha'], ['Tipo', 12, 'centro'],
+    ['Actividad o sitio', 26, 'texto'], ['Responsable del grupo', 24, 'texto'], ['Tel. responsable', 16, 'centro'],
+    ['N°', 6, 'entero'], ['Nombre', 28, 'texto'], ['Tipo de documento', 14, 'centro'], ['Número de documento', 17, 'centro'],
+    ['Edad', 8, 'entero'], ['Teléfono', 16, 'centro'], ['Residencia', 26, 'texto'], ['Contacto de emergencia', 24, 'texto'],
+    ['Tel. emergencia', 16, 'centro'], ['Salud / observaciones', 30, 'texto'], ['Estado', 19, 'centro'],
+    ['Código de verificación', 20, 'centro'], ['Pago verificado', 14, 'centro'], ['Condiciones verificadas', 20, 'centro'],
+    ['Guía', 26, 'texto'], ['Guardia que acompaña', 28, 'texto'],
+  ];
+  const ultCol = colLetra(cols.length - 1);
+  let xmlP = `<row r="1" ht="32" customHeight="1">${celda('A1', 'Consolidado de personas · Cabildo Indígena de Puracé', E.titulo)}</row>`;
+  xmlP += `<row r="2" ht="20" customHeight="1">${celda('A2', `Generado el ${hoyISO()} · ${filas.length} persona(s). Use los filtros de la fila 4 para ver un grupo o un día.`, E.subtitulo)}</row>`;
+  xmlP += `<row r="4" ht="36" customHeight="1">${cols.map((c, j) => celda(colLetra(j) + '4', c[0], E.cabecera)).join('')}</row>`;
+  filas.forEach((f, k) => {
+    const r = 5 + k, z = k % 2 === 1;
+    const estadoTxt = ESTADO_EXCEL[f.r.estado] || f.r.estado || '';
+    const estadoEst = { recibido: E.recibido, constancia: E.constancia, habilitado: E.habilitado }[f.r.estado] || E.centro;
+    const valores = [
+      f.r.folio, serialFechaHora(f.d.creado), serialFecha(f.d.fechaIngreso), f.d.tipo === 'grupo' ? 'Grupo' : 'Individual',
+      f.d.actividad || '', f.d.lider ? f.d.lider.nombre : '', f.d.lider ? String(f.d.lider.telefono || '') : '',
+      f.i + 1, f.p.nombre || '', DOC_NOMBRE[f.p.docTipo] || f.p.docTipo || '', String(f.p.docNumero ?? ''),
+      typeof f.p.edad === 'number' ? f.p.edad : (f.p.edad ? Number(f.p.edad) : null), String(f.p.telefono ?? ''),
+      f.p.residencia || '', f.p.emNombre || '', String(f.p.emTelefono ?? ''), f.p.salud || '',
+      estadoTxt, f.r.codigo ? formatCodigo(f.r.codigo) : '', f.r.pago_verificado ? 'Sí' : 'No', f.r.condiciones_verificadas ? 'Sí' : 'No',
+      f.r.guia_id ? nombreGuia(f.r.guia_id) : '', f.r.guardia_nombre || '',
+    ];
+    const estilosFila = cols.map((c, j) => {
+      if (j === 17) return estadoEst;
+      const base = E[c[2]] || E.texto;
+      if (!z) return base;
+      const zebra = { texto: E.textoZ, centro: E.centroZ, entero: E.enteroZ, fecha: E.fechaZ, fechaHora: E.fechaHoraZ }[c[2]];
+      return zebra || base;
+    });
+    xmlP += `<row r="${r}" ht="20" customHeight="1">${valores.map((v, j) => celda(colLetra(j) + r, v, estilosFila[j])).join('')}</row>`;
+  });
+  const anchos = cols.map((c, j) => `<col min="${j + 1}" max="${j + 1}" width="${c[1]}" customWidth="1"/>`).join('');
+  const hojaPersonas = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<sheetPr><tabColor rgb="FF6DC82A"/><pageSetUpPr fitToPage="1"/></sheetPr>
+<dimension ref="A1:${ultCol}${ultima}"/>
+<sheetViews><sheetView showGridLines="0" workbookViewId="0"><pane ySplit="4" topLeftCell="A5" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
+<sheetFormatPr defaultRowHeight="20"/>
+<cols>${anchos}</cols>
+<sheetData>${xmlP}</sheetData>
+<autoFilter ref="A4:${ultCol}${ultima}"/>
+<mergeCells count="2"><mergeCell ref="A1:${ultCol}1"/><mergeCell ref="A2:${ultCol}2"/></mergeCells>
+<pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/>
+<pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/>
+</worksheet>`;
+
+  // ---- Hoja Resumen (fórmulas sobre la hoja Personas) ----
+  const cuenta = e => filas.filter(f => f.r.estado === e).length;
+  const edades = filas.map(f => Number(f.p.edad)).filter(x => isFinite(x) && x > 0);
+  const sinTel = filas.filter(f => !String(f.p.telefono ?? '').trim()).length;
+  const indicadores = [
+    ['Personas registradas', { f: `COUNTA(${rango('A')})`, v: filas.length }, E.total],
+    ['Habilitadas', { f: `COUNTIF(${rango('R')},"Habilitado")`, v: cuenta('habilitado') }, E.total],
+    ['Con constancia emitida', { f: `COUNTIF(${rango('R')},"Constancia emitida")`, v: cuenta('constancia') }, E.total],
+    ['Recibidas (sin constancia)', { f: `COUNTIF(${rango('R')},"Recibido")`, v: cuenta('recibido') }, E.total],
+    ['Edad promedio', { f: `IFERROR(ROUND(AVERAGE(${rango('L')}),1),0)`, v: edades.length ? Math.round(edades.reduce((a, b) => a + b, 0) / edades.length * 10) / 10 : 0 }, E.decimal],
+    ['Personas sin teléfono', { f: `COUNTBLANK(${rango('M')})`, v: sinTel }, E.total],
+  ];
+  // Ocupación por día: una fila por fecha de ingreso
+  const porDia = {};
+  filas.forEach(f => { const k = f.d.fechaIngreso || ''; if (k) porDia[k] = (porDia[k] || 0) + 1; });
+  const dias = Object.keys(porDia).sort();
+  let xmlR = `<row r="1" ht="32" customHeight="1">${celda('A1', 'Resumen del ingreso · Cabildo Indígena de Puracé', E.titulo)}</row>`;
+  xmlR += `<row r="2" ht="20" customHeight="1">${celda('A2', 'Cifras calculadas con fórmulas a partir de la hoja Personas. Se actualizan si cambia algún dato allí.', E.subtitulo)}</row>`;
+  xmlR += `<row r="4" ht="22" customHeight="1">${celda('A4', 'Indicadores', E.seccion)}</row>`;
+  xmlR += `<row r="5" ht="24" customHeight="1">${celda('A5', 'Indicador', E.cabecera)}${celda('B5', 'Valor', E.cabecera)}</row>`;
+  indicadores.forEach((ind, k) => {
+    const r = 6 + k;
+    xmlR += `<row r="${r}" ht="20" customHeight="1">${celda('A' + r, ind[0], E.texto)}${celda('B' + r, ind[1], ind[2])}</row>`;
+  });
+  const filaOcu = 6 + indicadores.length + 2;
+  xmlR += `<row r="${filaOcu}" ht="22" customHeight="1">${celda('A' + filaOcu, 'Ocupación por día', E.seccion)}</row>`;
+  const filaCab = filaOcu + 1;
+  xmlR += `<row r="${filaCab}" ht="24" customHeight="1">${['Fecha', 'Personas', 'Cupo', 'Ocupación', 'Situación'].map((h, j) => celda(colLetra(j) + filaCab, h, E.cabecera)).join('')}</row>`;
+  let fila = filaCab + 1;
+  const primeraDia = fila;
+  dias.forEach((iso, k) => {
+    const cupo = cupoDelDia(iso), usado = porDia[iso];
+    const pct = cupo ? usado / cupo : 0;
+    const sit = usado >= cupo ? 'Lleno' : usado >= cupo * 0.8 ? 'Casi lleno' : 'Disponible';
+    const z = k % 2 === 1;
+    xmlR += `<row r="${fila}" ht="20" customHeight="1">`
+      + celda('A' + fila, serialFecha(iso), z ? E.fechaZ : E.fecha)
+      + celda('B' + fila, { f: `COUNTIF(${rango('C')},A${fila})`, v: usado }, z ? E.enteroZ : E.entero)
+      + celda('C' + fila, cupo, z ? E.enteroZ : E.entero)
+      + celda('D' + fila, { f: `IF(C${fila}=0,0,B${fila}/C${fila})`, v: pct }, E.porcentaje)
+      + celda('E' + fila, { f: `IF(B${fila}>=C${fila},"Lleno",IF(B${fila}>=0.8*C${fila},"Casi lleno","Disponible"))`, v: sit }, E.centro)
+      + `</row>`;
+    fila++;
+  });
+  const ultDia = fila - 1;
+  const totalUsado = dias.reduce((a, d) => a + porDia[d], 0), totalCupo = dias.reduce((a, d) => a + cupoDelDia(d), 0);
+  if (dias.length){
+    xmlR += `<row r="${fila}" ht="22" customHeight="1">`
+      + celda('A' + fila, 'Total', E.totalTexto)
+      + celda('B' + fila, { f: `SUM(B${primeraDia}:B${ultDia})`, v: totalUsado }, E.total)
+      + celda('C' + fila, { f: `SUM(C${primeraDia}:C${ultDia})`, v: totalCupo }, E.total)
+      + celda('D' + fila, { f: `IF(C${fila}=0,0,B${fila}/C${fila})`, v: totalCupo ? totalUsado / totalCupo : 0 }, E.totalPorc)
+      + celda('E' + fila, '', E.total)
+      + `</row>`;
+  }
+  const hojaResumen = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<sheetPr><tabColor rgb="FF005584"/><pageSetUpPr fitToPage="1"/></sheetPr>
+<dimension ref="A1:E${Math.max(fila, 6)}"/>
+<sheetViews><sheetView showGridLines="0" tabSelected="1" workbookViewId="0"/></sheetViews>
+<sheetFormatPr defaultRowHeight="20"/>
+<cols><col min="1" max="1" width="32" customWidth="1"/><col min="2" max="2" width="16" customWidth="1"/><col min="3" max="3" width="14" customWidth="1"/><col min="4" max="4" width="14" customWidth="1"/><col min="5" max="5" width="18" customWidth="1"/></cols>
+<sheetData>${xmlR}</sheetData>
+<mergeCells count="2"><mergeCell ref="A1:E1"/><mergeCell ref="A2:E2"/></mergeCells>
+<pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/>
+<pageSetup orientation="portrait" fitToWidth="1" fitToHeight="0"/>
+</worksheet>`;
+
+  const enc = s => new TextEncoder().encode(s);
+  const archivos = [
+    { nombre: '[Content_Types].xml', datos: enc(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`) },
+    { nombre: '_rels/.rels', datos: enc(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`) },
+    { nombre: 'xl/workbook.xml', datos: enc(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView activeTab="0"/></bookViews><sheets><sheet name="Resumen" sheetId="1" r:id="rId1"/><sheet name="Personas" sheetId="2" r:id="rId2"/></sheets><definedNames><definedName name="_xlnm._FilterDatabase" localSheetId="1" hidden="1">Personas!$A$4:$${ultCol}$${ultima}</definedName></definedNames><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>`) },
+    { nombre: 'xl/_rels/workbook.xml.rels', datos: enc(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`) },
+    { nombre: 'xl/styles.xml', datos: enc(estilosXml()) },
+    { nombre: 'xl/worksheets/sheet1.xml', datos: enc(hojaResumen) },
+    { nombre: 'xl/worksheets/sheet2.xml', datos: enc(hojaPersonas) },
+  ];
+  descargar(zipSinComprimir(archivos), `Consolidado-personas-${hoyISO()}.xlsx`);
+}
+
 /* ---------- Exportar ---------- */
 async function exportarPersonas(){
   const filas = [['Folio','Recibido','Fecha ingreso','Tipo','Actividad','Responsable grupo','Tel. responsable','N°','Nombre','Tipo documento','Número documento','Edad','Teléfono','Residencia','Contacto emergencia','Tel. emergencia','Salud / observaciones','Estado','Código verificación','Pago verificado','Condiciones verificadas']];
@@ -4086,6 +4327,7 @@ function init(){
     $('#calGrid').scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
   $('#verEntrada').addEventListener('keydown', e => { if (e.key === 'Enter') verificarEntrada($('#verEntrada').value); });
+  $('#btnExcel').onclick = () => exportarExcel().catch(e => alert('No se pudo generar el Excel: ' + e.message));
   $('#btnCsvPersonas').onclick = () => exportarPersonas().catch(e => alert(e.message));
   $('#btnCsvConstancias').onclick = exportarConstancias;
   $('#btnRespaldo').onclick = () => exportarRespaldo().catch(e => alert(e.message));
