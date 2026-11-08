@@ -141,7 +141,7 @@ footer{font-size:12px;color:var(--muted);text-align:center;padding:0 16px 24px}
       <p id="sTexto"></p>
       <div id="sPersonas"></div>
     </div>
-    <button type="button" id="btnCopia" class="btn sec" data-i18n="sent.copia">Descargar copia de mi registro (.json)</button>
+    <button type="button" id="btnCopia" class="btn sec" data-i18n="sent.copia">Descargar copia de mi registro (PDF)</button>
     <button type="button" id="btnRespaldo" class="btn wa hidden" data-i18n="sent.respaldo">Enviar por WhatsApp como respaldo</button>
     <button type="button" id="btnNuevo" class="btn sec" data-i18n="sent.nuevo">Registrar otra persona</button>
   </section>
@@ -2937,7 +2937,7 @@ Object.assign(T.es, {
   'sent.estado': 'Estado',
   'sent.recibido': 'Recibido. Pendiente de constancia y de verificación de pago y condiciones.',
   'sent.texto': 'El Cabildo emitirá su constancia con código de verificación y se la enviará por WhatsApp al número {tel}. El ingreso queda sujeto a la verificación de pago y condiciones.',
-  'sent.copia': 'Descargar copia de mi registro (.json)',
+  'sent.copia': 'Descargar copia de mi registro (PDF)',
   'sent.nuevo': 'Registrar otra persona',
   'sent.error': 'No se pudo enviar el registro: {e}. Sus datos siguen en pantalla; intente de nuevo.',
   'sent.respaldo': 'Enviar por WhatsApp como respaldo',
@@ -2951,7 +2951,7 @@ Object.assign(T.en, {
   'sent.estado': 'Status',
   'sent.recibido': 'Received. Pending certificate and verification of payment and conditions.',
   'sent.texto': 'The Cabildo will issue your certificate with a verification code and send it to you by WhatsApp at {tel}. Entry is subject to verification of payment and conditions.',
-  'sent.copia': 'Download a copy of my registration (.json)',
+  'sent.copia': 'Download a copy of my registration (PDF)',
   'sent.nuevo': 'Register another person',
   'sent.error': 'The registration could not be sent: {e}. Your data is still on screen; please try again.',
   'sent.respaldo': 'Send by WhatsApp as backup',
@@ -2965,7 +2965,7 @@ Object.assign(T.fr, {
   'sent.estado': 'Statut',
   'sent.recibido': 'Reçue. En attente de l\'attestation et de la vérification du paiement et des conditions.',
   'sent.texto': 'Le Cabildo émettra votre attestation avec un code de vérification et vous l\'enverra par WhatsApp au numéro {tel}. L\'entrée est subordonnée à la vérification du paiement et des conditions.',
-  'sent.copia': 'Télécharger une copie de mon inscription (.json)',
+  'sent.copia': 'Télécharger une copie de mon inscription (PDF)',
   'sent.nuevo': 'Enregistrer une autre personne',
   'sent.error': 'L\'inscription n\'a pas pu être envoyée : {e}. Vos données sont toujours à l\'écran ; réessayez.',
   'sent.respaldo': 'Envoyer par WhatsApp en secours',
@@ -2979,7 +2979,7 @@ Object.assign(T.pt, {
   'sent.estado': 'Estado',
   'sent.recibido': 'Recebido. Pendente de declaração e de verificação de pagamento e condições.',
   'sent.texto': 'O Cabildo emitirá a sua declaração com código de verificação e enviá-la-á por WhatsApp para o número {tel}. A entrada fica sujeita à verificação do pagamento e das condições.',
-  'sent.copia': 'Descarregar cópia do meu registo (.json)',
+  'sent.copia': 'Descarregar cópia do meu registo (PDF)',
   'sent.nuevo': 'Registar outra pessoa',
   'sent.error': 'Não foi possível enviar o registo: {e}. Os seus dados continuam no ecrã; tente novamente.',
   'sent.respaldo': 'Enviar por WhatsApp como apoio',
@@ -2993,7 +2993,7 @@ Object.assign(T.de, {
   'sent.estado': 'Status',
   'sent.recibido': 'Eingegangen. Ausstehend: Bescheinigung und Prüfung von Zahlung und Bedingungen.',
   'sent.texto': 'Der Cabildo stellt Ihre Bescheinigung mit Prüfcode aus und sendet sie Ihnen per WhatsApp an die Nummer {tel}. Der Eintritt unterliegt der Prüfung von Zahlung und Bedingungen.',
-  'sent.copia': 'Kopie meiner Registrierung herunterladen (.json)',
+  'sent.copia': 'Kopie meiner Registrierung herunterladen (PDF)',
   'sent.nuevo': 'Eine weitere Person registrieren',
   'sent.error': 'Die Registrierung konnte nicht gesendet werden: {e}. Ihre Daten sind noch auf dem Bildschirm; bitte erneut versuchen.',
   'sent.respaldo': 'Per WhatsApp als Sicherung senden',
@@ -3051,6 +3051,73 @@ Object.assign(T.de, {
   'v.sinBase': 'Dieser Eintrag kann auf dieser Seite nicht abgerufen werden. Bitte im Panel des Cabildo prüfen.',
   'v.p2': 'Vergleichen Sie Name und letzte Ziffern des Dokuments mit dem Ausweis der Person. Alle Angaben finden Sie im Panel des Cabildo.'
 });
+
+/* PDF sencillo para la copia del visitante: texto con Helvetica, sin librerías externas.
+   Las líneas se envuelven y se pasan a otra página si no caben. */
+function pdfDesdeLineas(lineas){
+  const W = 595, H = 842, M = 54;
+  const WIN = { '€': 0x80, '‚': 0x82, 'ƒ': 0x83, '„': 0x84, '…': 0x85, '†': 0x86, '‡': 0x87, '‘': 0x91, '’': 0x92, '“': 0x93, '”': 0x94, '•': 0x95, '–': 0x96, '—': 0x97, '™': 0x99 };
+  const codificar = s => { let o = ''; for (const ch of String(s)){ const b = WIN[ch] ?? (ch.codePointAt(0) < 256 ? ch.codePointAt(0) : 63); o += String.fromCharCode(b); } return o; };
+  const escapar = s => s.replace(/[\\()]/g, m => '\\' + m);
+  const envolver = (texto, size, bold, maxW) => {
+    const maxCh = Math.max(10, Math.floor(maxW / (size * (bold ? 0.56 : 0.5))));
+    const out = []; let cur = '';
+    for (const w of String(texto).split(/\s+/)){
+      const tt = cur ? cur + ' ' + w : w;
+      if (tt.length <= maxCh) cur = tt; else { if (cur) out.push(cur); cur = w; }
+    }
+    out.push(cur);
+    return out;
+  };
+  const paginas = []; let ops = []; let y = H - M;
+  for (const L of lineas){
+    if (L.sep) y -= L.sep;
+    const size = L.s || 11, alto = size * 1.5;
+    for (const trozo of envolver(L.t, size, L.b, W - 2 * M)){
+      if (y - alto < M){ paginas.push(ops.join('\n')); ops = []; y = H - M; }
+      y -= alto;
+      ops.push(`BT /${L.b ? 'F2' : 'F1'} ${size} Tf ${M} ${y.toFixed(1)} Td (${escapar(codificar(trozo))}) Tj ET`);
+    }
+  }
+  paginas.push(ops.join('\n'));
+
+  const objs = [];
+  objs.push('<< /Type /Catalog /Pages 2 0 R >>');
+  objs.push(`<< /Type /Pages /Kids [${paginas.map((_, i) => `${5 + 2 * i} 0 R`).join(' ')}] /Count ${paginas.length} >>`);
+  objs.push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+  objs.push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+  paginas.forEach((contenido, i) => {
+    objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${6 + 2 * i} 0 R >>`);
+    objs.push(`<< /Length ${contenido.length} >>\nstream\n${contenido}\nendstream`);
+  });
+
+  let pdf = '%PDF-1.4\n%\xe2\xe3\xcf\xd3\n';
+  const offs = [];
+  objs.forEach((o, i) => { offs.push(pdf.length); pdf += `${i + 1} 0 obj\n${o}\nendobj\n`; });
+  const xref = pdf.length;
+  pdf += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n`;
+  offs.forEach(o => { pdf += String(o).padStart(10, '0') + ' 00000 n \n'; });
+  pdf += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+  return new Blob([Uint8Array.from(pdf, ch => ch.charCodeAt(0))], { type: 'application/pdf' });
+}
+
+/* Copia en PDF del registro que acaba de enviar el visitante */
+function copiaPDF(core, fila){
+  const L = [];
+  L.push({ t: CONFIG.organizacion.toUpperCase() + ' · NIT ' + CONFIG.nit, s: 9 });
+  L.push({ t: t('sent.titulo'), s: 20, b: true, sep: 10 });
+  L.push({ t: `${t('v.folio')}: ${core.folio}`, s: 14, b: true, sep: 8 });
+  L.push({ t: `${t('v.fecha')}: ${fmtFechaHora(core.creado)}`, s: 11, sep: 4 });
+  L.push({ t: `${t('c.pdf.fecha')}: ${fmtFechaIso(core.fechaIngreso)}`, s: 11 });
+  if (core.actividad) L.push({ t: `${t('c.pdf.act')}: ${core.actividad}`, s: 11 });
+  L.push({ t: `${t('sent.estado')}: ${t('sent.recibido')}`, s: 11, sep: 8 });
+  L.push({ t: t('sent.texto', { tel: fila.contacto }), s: 11 });
+  L.push({ t: core.tipo === 'grupo' ? t('c.integrantesReg') : t('c.personaReg'), s: 12, b: true, sep: 14 });
+  core.personas.forEach((p, i) => L.push({ t: `${i + 1}. ${p.nombre}  ·  ${p.docTipo} ${p.docNumero}  ·  ${p.telefono || ''}`, s: 11 }));
+  if (core.lider) L.push({ t: `${t('v.titular')}: ${core.lider.nombre}`, s: 11, sep: 6 });
+  L.push({ t: CONFIG.resguardo + ' · ' + CONFIG.territorio, s: 8, sep: 30 });
+  return pdfDesdeLineas(L);
+}
 
 /* Constancia: guía y guardia que acompaña */
 Object.assign(T.es, { 'c.guia': 'Guía', 'c.guardia': 'Guardia indígena que acompaña' });
@@ -3579,6 +3646,11 @@ function descargarCopia(){
   descargar(new Blob([JSON.stringify(copia, null, 2)], { type: 'application/json' }), `${core.folio}.json`);
 }
 
+function descargarCopiaPDF(){
+  const { core, fila } = ultimo;
+  descargar(copiaPDF(core, fila), `${core.folio}.pdf`);
+}
+
 function respaldo(){
   const { core } = ultimo;
   descargarCopia();
@@ -3692,7 +3764,7 @@ function init(){
   $('#btnGrupo').onclick = () => setTipo('grupo');
   $('#btnAgregar').onclick = () => { agregarPersona(); };
   $('#btnGenerar').onclick = enviar;
-  $('#btnCopia').onclick = descargarCopia;
+  $('#btnCopia').onclick = descargarCopiaPDF;
   $('#btnRespaldo').onclick = respaldo;
   $('#btnNuevo').onclick = () => { location.replace(location.href.split(/[?#]/)[0]); };
   aplicarIdioma();
