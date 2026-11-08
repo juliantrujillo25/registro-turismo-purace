@@ -42,7 +42,12 @@ button{font:inherit;cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--azul);color:#fff}
 .legal{font-size:14px;line-height:1.55;background:var(--beige);border-radius:12px;padding:14px;max-height:300px;overflow:auto}
 .legal p{margin:0 0 9px}
-.check{display:flex;gap:10px;align-items:flex-start;font-weight:600;font-size:15px;margin-top:12px}
+.check{display:flex;gap:8px;align-items:center;font-weight:600;font-size:14px;margin-top:4px;line-height:1.35}
+.check + .check{margin-top:2px}
+.tri{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.2fr);gap:10px}
+.tri label{min-width:0}
+.tri label > span{min-height:34px;display:flex;align-items:flex-end;line-height:1.2}
+.tri select,.tri input{min-width:0;width:100%}
 .check input{width:22px;height:22px;margin:2px 0 0;flex:0 0 auto}
 .pad{display:block;width:100%;height:150px;background:#fff;border:1.5px dashed #b9b09c;border-radius:10px;touch-action:none}
 .firma-head{display:flex;justify-content:space-between;align-items:center;margin:12px 0 6px;font-size:14px;font-weight:600}
@@ -63,7 +68,7 @@ table.tabla th{color:var(--muted);font-size:12px;text-transform:uppercase;letter
 .aviso{font-size:13px;color:#7a4a00;background:#fff4e5;border:1px solid #f5d3a1;border-radius:10px;padding:10px 12px;margin:0 0 12px}
 .nota{font-size:13px;color:var(--muted)}
 footer{font-size:12px;color:var(--muted);text-align:center;padding:0 16px 24px}
-@media (max-width:520px){.grid{grid-template-columns:1fr}}
+@media (max-width:520px){.grid{grid-template-columns:1fr}.tri{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -3718,9 +3723,11 @@ function personaHTML(){
     </div>
     <div class="grid">
       <label class="full"><span data-i18n="f.nombre">Nombre completo *</span><input data-f="nombre" maxlength="120" autocomplete="off"></label>
-      <label><span data-i18n="f.docTipo">Tipo de documento *</span><select data-f="docTipo">${opciones}</select></label>
-      <label><span data-i18n="f.docNumero">Número de documento *</span><input data-f="docNumero" inputmode="numeric" maxlength="20" autocomplete="off"></label>
-      <label><span data-i18n="f.expedida">Lugar de expedición del documento</span><input data-f="expedida" maxlength="80" autocomplete="off"></label>
+      <div class="tri">
+        <label><span data-i18n="f.docTipo">Tipo de documento *</span><select data-f="docTipo">${opciones}</select></label>
+        <label><span data-i18n="f.docNumero">Número de documento *</span><input data-f="docNumero" inputmode="numeric" maxlength="20" autocomplete="off"></label>
+        <label><span data-i18n="f.expedida">Lugar de expedición del documento</span><input data-f="expedida" maxlength="80" autocomplete="off"></label>
+      </div>
       <label><span data-i18n="f.edad">Edad *</span><input data-f="edad" type="number" inputmode="numeric" min="0" max="120"></label>
       <label><span data-i18n="f.telefono">Teléfono de contacto *</span><input data-f="telefono" type="tel" inputmode="tel" maxlength="20" autocomplete="off"></label>
       <label class="full"><span data-i18n="f.residencia">Lugar de residencia / dirección</span><input data-f="residencia" maxlength="160" autocomplete="off"></label>
