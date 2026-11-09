@@ -147,10 +147,9 @@ dialog::backdrop{background:rgba(15,23,42,.55)}
 .af-pie p{width:100%;margin:2mm 0 0;padding-top:2.5mm;border-top:.25mm solid rgba(255,255,255,.25);font-size:2.6mm;letter-spacing:.14em;text-transform:uppercase;opacity:.85}
 @page{size:A4;margin:0}
 @media print{
-  html,body{margin:0;padding:0;background:#fff}
-  body *{visibility:hidden}
-  .solo-imprimir,.solo-imprimir *{visibility:visible}
-  .solo-imprimir{display:block;position:absolute;left:0;top:0;width:210mm;height:297mm}
+  html,body{margin:0;padding:0;background:#fff;height:auto;min-height:0}
+  body > :not(#areaImpresion){display:none!important}
+  .solo-imprimir{display:block;position:static;width:210mm;height:296mm;overflow:hidden;page-break-after:avoid;break-after:avoid}
   .afiche,.afiche *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 </style>
