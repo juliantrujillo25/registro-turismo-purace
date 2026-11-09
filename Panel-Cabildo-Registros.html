@@ -108,11 +108,50 @@ dialog::backdrop{background:rgba(15,23,42,.55)}
 @media (max-width:980px){.stats{grid-template-columns:1fr 1fr}}
 @media (max-width:820px){.grid2{grid-template-columns:1fr}}
 @media (max-width:560px){header h1{font-size:19px}.stats{grid-template-columns:1fr 1fr}.stat .n{font-size:24px}main{padding:16px 10px 40px}.card{padding:16px}}
+.etq-enlace{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gris,#52606d);margin-bottom:6px}
+.qrbox canvas{width:180px;height:180px}
+
+/* Afiche para imprimir (A4) */
+.afiche{width:210mm;height:297mm;box-sizing:border-box;background:#fbf8f1;color:#1f2933;font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;display:flex;flex-direction:column;position:relative;overflow:hidden;text-align:center}
+.afiche *{box-sizing:border-box}
+.af-franja{display:flex;height:2.6mm;flex:none}
+.af-franja i{flex:1}
+.af-franja i:nth-child(1){background:#005584}.af-franja i:nth-child(2){background:#1b8fb5}.af-franja i:nth-child(3){background:#6dc82a}.af-franja i:nth-child(4){background:#f08a24}
+.af-cab{background:#fff;padding:5mm 10mm 4mm;flex:none;border-bottom:.3mm solid #e6e0d2}
+.af-cab img{height:19mm;display:block;margin:0 auto 2.5mm}
+.af-sub{font-size:2.9mm;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:#0b4f7c}
+.af-titulo{padding:5mm 12mm 0;flex:none}
+.af-titulo h1{margin:0;font-size:9.5mm;line-height:1.05;font-weight:900;text-transform:uppercase;color:#0b4f7c}
+.af-titulo h2{margin:2.5mm 0 0;font-size:5.6mm;font-weight:800;text-transform:uppercase;color:#f08a24;display:flex;align-items:center;justify-content:center;gap:3mm}
+.af-titulo h2 span{display:block;width:12mm;height:.7mm;background:#f08a24}
+.af-titulo p{margin:2.5mm 0 0;font-size:3.6mm;color:#52606d}
+.af-qr{position:relative;margin:5mm auto 0;flex:none;width:100%}
+.af-marco{width:76mm;height:76mm;margin:0 auto;background:#fff;border:1.1mm solid #f08a24;border-radius:6mm;padding:4mm;box-shadow:0 1mm 4mm rgba(0,0,0,.12)}
+.af-marco canvas{width:100%;height:100%;display:block;image-rendering:pixelated}
+.af-sello{position:absolute;width:20mm;height:20mm;border-radius:50%;border:1mm solid #fff;box-shadow:0 .8mm 3mm rgba(0,0,0,.25);object-fit:cover;left:calc(50% + 30mm);top:-6mm;background:#fff}
+.af-escanea{margin-top:4mm;font-size:3.8mm;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#0b4f7c}
+.af-escanea b{color:#f08a24}
+.af-link{display:inline-block;margin-top:3mm;padding:2.2mm 6mm;border:.3mm solid #c9d3df;border-radius:6mm;background:#fff;font-size:3.5mm;color:#0b4f7c;font-weight:600}
+.af-pasos{list-style:none;margin:5mm auto 0;padding:0 18mm;display:flex;flex-direction:column;gap:2mm;flex:none;width:100%;text-align:left}
+.af-pasos li{display:flex;align-items:center;gap:4mm;background:#fff;border:.3mm solid #e1e6ee;border-radius:3.5mm;padding:2mm 4mm}
+.af-pasos li b{flex:none;width:8.5mm;height:8.5mm;border-radius:50%;color:#fff;font-size:4.4mm;display:flex;align-items:center;justify-content:center;font-weight:800}
+.af-pasos li:nth-child(1) b{background:#0b4f7c}.af-pasos li:nth-child(2) b{background:#6dc82a}.af-pasos li:nth-child(3) b{background:#f08a24}
+.af-pasos strong{display:block;font-size:4mm;color:#1f2933}
+.af-pasos span{display:block;font-size:3.2mm;color:#52606d;margin-top:.4mm}
+.af-alerta{margin:4mm 18mm 0;padding:3mm 4mm;background:#fff7dd;border:.3mm solid #f2d27a;border-left:1.4mm solid #e0a800;border-radius:3mm;font-size:3.1mm;line-height:1.35;color:#5c4400;text-align:left;flex:none}
+.af-alerta strong{display:block;text-transform:uppercase;font-size:3.1mm;margin-bottom:.8mm}
+.af-pie{margin-top:auto;background:#1b4f7c;color:#fff;padding:4mm 14mm 3.5mm;display:flex;flex-wrap:wrap;justify-content:space-between;gap:2mm 6mm;flex:none}
+.af-pie div{text-align:left}
+.af-pie small{display:block;font-size:2.6mm;letter-spacing:.14em;text-transform:uppercase;opacity:.75}
+.af-pie b{font-size:4.6mm;font-weight:800}
+.af-pie p{width:100%;margin:2mm 0 0;padding-top:2.5mm;border-top:.25mm solid rgba(255,255,255,.25);font-size:2.6mm;letter-spacing:.14em;text-transform:uppercase;opacity:.85}
+@page{size:A4;margin:0}
 @media print{
+  html,body{margin:0;padding:0;background:#fff}
   body *{visibility:hidden}
   .solo-imprimir,.solo-imprimir *{visibility:visible}
-  .solo-imprimir{display:block;position:absolute;left:0;top:0;width:100%;text-align:center;padding:30px}
-  .solo-imprimir canvas{width:320px;height:320px}
+  .solo-imprimir{display:block;position:absolute;left:0;top:0;width:210mm;height:297mm}
+  .afiche,.afiche *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 </style>
 
@@ -273,15 +312,18 @@ dialog::backdrop{background:rgba(15,23,42,.55)}
       <div id="msgImp" class="msg" role="status"></div>
     </section>
 
-    <!-- 5. QR PARA LA CARTELERA -->
+    <!-- ENLACE Y QR DE REGISTRO + AFICHE -->
     <section class="card">
-      <h2>5. QR para la cartelera</h2>
-      <p class="nota-p">Imprima este QR y péguelo en la caseta. Abre la página de registro de los visitantes.</p>
       <div class="qrbox">
-        <canvas id="qrCartel" width="200" height="200"></canvas>
+        <canvas id="qrCartel" width="400" height="400"></canvas>
         <div style="flex:1 1 280px">
+          <div class="etq-enlace">Enlace para compartir</div>
           <div class="valor" id="urlCartel" style="word-break:break-all;font-size:14px"></div>
-          <div class="acciones"><button class="btn" id="btnImprimirQR" type="button">Imprimir QR</button></div>
+          <div class="acciones">
+            <button class="btn sec" id="btnCopiarEnlace" type="button">Copiar enlace</button>
+            <button class="btn" id="btnImprimirQR" type="button">Imprimir afiche</button>
+          </div>
+          <div id="msgEnlace" class="msg" role="status"></div>
         </div>
       </div>
     </section>
@@ -299,10 +341,35 @@ dialog::backdrop{background:rgba(15,23,42,.55)}
 </dialog>
 
 <div class="solo-imprimir" id="areaImpresion">
-  <h2 style="color:#1e4a7a">Registro de ingreso al Territorio Ancestral</h2>
-  <p>Comunidad Indígena de Puracé</p>
-  <canvas id="qrImpresion" width="320" height="320"></canvas>
-  <p>Escanee el código con la cámara del celular para registrar su ingreso.</p>
+  <div class="afiche">
+    <div class="af-franja"><i></i><i></i><i></i><i></i></div>
+    <div class="af-cab">
+      <img id="afLogo" alt="Turismo Puracé">
+      <div class="af-sub">Resguardo Indígena de Puracé · Pueblo Kokonuko · NIT 817.004.093-7</div>
+    </div>
+    <div class="af-titulo">
+      <h1>Registro de ingreso</h1>
+      <h2><span></span>Acta de corresponsabilidad<span></span></h2>
+      <p>Territorio Ancestral de la Comunidad Indígena de Puracé</p>
+    </div>
+    <div class="af-qr">
+      <div class="af-marco"><canvas id="qrImpresion" width="640" height="640"></canvas></div>
+      <img id="afSello" class="af-sello" alt="">
+      <div class="af-escanea">Escanea aquí <b>·</b> Llena tu registro</div>
+      <div class="af-link" id="afLink"></div>
+    </div>
+    <ol class="af-pasos">
+      <li><b>1</b><div><strong>Escanea el código QR</strong><span>Con la cámara de tu celular</span></div></li>
+      <li><b>2</b><div><strong>Llena tus datos</strong><span>Acta de corresponsabilidad y contacto de emergencia</span></div></li>
+      <li><b>3</b><div><strong>Muestra tu constancia al guía</strong><span>El Cabildo la emite después de verificar el pago y las condiciones</span></div></li>
+    </ol>
+    <div class="af-alerta"><strong>Alerta amarilla · Cadena Volcánica Los Kokonukos</strong>El ingreso es condicionado y puede suspenderse en cualquier momento. Siga siempre las indicaciones del guía local y de las Autoridades Tradicionales.</div>
+    <div class="af-pie">
+      <div><small>WhatsApp oficial</small><b id="afWa"></b></div>
+      <div><small>Correo</small><b>turismopurace@gmail.com</b></div>
+      <p>Turismo comunitario Puracé — Autonomía, identidad y seguridad</p>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -4734,6 +4801,7 @@ async function iniciar(){
   $('#org').textContent = CONFIG.organizacion + ' · NIT ' + CONFIG.nit;
   $('#urlCartel').textContent = CONFIG.urlBase;
   pintarQR($('#qrCartel'), CONFIG.urlBase);
+  prepararAfiche();
   if (DB.modo() === 'supabase'){
     $('#banner').className = 'banner ok'; $('#banner').textContent = 'Conectado a la base compartida. Los registros llegan en vivo al panel.';
     if (await DB.haySesion()) mostrarPrincipal(); else $('#login').classList.remove('oculto');
@@ -4743,6 +4811,14 @@ async function iniciar(){
   }
 }
 
+function prepararAfiche(){
+  $('#afLogo').src = LOGO_PURACE_COLOR;
+  $('#afSello').src = LOGO_CABILDO;
+  $('#afLink').textContent = CONFIG.urlBase.replace(/^https?:\/\//, '');
+  const w = String(CONFIG.whatsapp || '').replace(/^57/, '');
+  $('#afWa').textContent = w.length === 10 ? w.slice(0, 3) + ' ' + w.slice(3, 6) + ' ' + w.slice(6) : w;
+  pintarQR($('#qrImpresion'), CONFIG.urlBase);
+}
 function pintarQR(canvas, texto){
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -4799,7 +4875,17 @@ function init(){
   ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
   ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
   drop.addEventListener('drop', e => { const fs = Array.from(e.dataTransfer.files); if (fs.length) importarArchivos(fs); });
-  $('#btnImprimirQR').onclick = () => { pintarQR($('#qrImpresion'), CONFIG.urlBase); window.print(); };
+  $('#btnImprimirQR').onclick = () => { prepararAfiche(); window.print(); };
+  $('#btnCopiarEnlace').onclick = async () => {
+    const m = $('#msgEnlace');
+    let ok = false;
+    const t = document.createElement('textarea'); t.value = CONFIG.urlBase; t.style.cssText = 'position:fixed;left:-9999px;top:0';
+    document.body.appendChild(t); t.select();
+    try { ok = document.execCommand('copy'); } catch (e) {}
+    t.remove();
+    if (!ok) { try { await navigator.clipboard.writeText(CONFIG.urlBase); ok = true; } catch (e) {} }
+    aviso(m, ok ? 'ok' : 'err', ok ? 'Enlace copiado.' : 'No se pudo copiar. Selecciónelo y cópielo a mano.');
+  };
 }
 document.addEventListener('DOMContentLoaded', init);
 </script>
