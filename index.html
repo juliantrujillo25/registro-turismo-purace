@@ -4325,6 +4325,12 @@ function aplicarIdioma(raiz = document){
     sel.value = v;
   });
 }
+function pintarPie(){
+  const pie = $('#pie');
+  pie.textContent = CONFIG.resguardo + ' · ' + CONFIG.territorio;
+  pie.appendChild(document.createElement('br'));
+  pie.appendChild(document.createTextNode('NIT ' + CONFIG.nit));
+}
 function actualizarIdiomaActual(){ const el = $('#langActual'); if (el) el.textContent = String(lang).toUpperCase(); }
 function configurarIdiomas(){
   const caja = $('#langs'), disparador = $('#langTrigger'), menu = $('#langMenu');
@@ -4345,7 +4351,7 @@ function cambiarIdioma(nuevo){
   actualizarIdiomaActual();
   $$('.lang-btn').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === nuevo));
   document.title = t('docTitle');
-  $('#pie').textContent = CONFIG.resguardo + ' · ' + CONFIG.territorio;
+  pintarPie();
   aplicarIdioma();
   renumerar();
   ['#msg', '#msgEnv'].forEach(ocultarMsg);
@@ -4371,8 +4377,8 @@ function init(){
   document.documentElement.lang = lang;
   configurarIdiomas();
   actualizarIdiomaActual();
-  $('#org').textContent = CONFIG.organizacion + ' · NIT ' + CONFIG.nit;
-  $('#pie').textContent = CONFIG.resguardo + ' · ' + CONFIG.territorio;
+  $('#org').textContent = CONFIG.organizacion;
+  pintarPie();
   $('#fechaIngreso').value = hoyISO();
   $$('.lang-btn').forEach(b => b.addEventListener('click', () => cambiarIdioma(b.dataset.lang)));
   $('#btnIndividual').onclick = () => setTipo('individual');
