@@ -13,9 +13,18 @@ header{background:linear-gradient(135deg,var(--azul),var(--cielo));color:#fff;pa
 .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
 header .org{font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.92;padding-top:6px}
 header h1{margin:10px 0 0;font-size:21px;line-height:1.25}
-.langs{display:flex;gap:4px;background:rgba(255,255,255,.18);border-radius:10px;padding:3px}
-.langs button{border:0;background:transparent;color:#fff;font-weight:700;font-size:13px;padding:6px 9px;border-radius:7px;cursor:pointer;letter-spacing:.04em}
-.langs button[aria-pressed="true"]{background:#fff;color:var(--azul)}
+.langs{position:relative}
+.lang-trigger{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);color:#fff;font-weight:700;font-size:14px;letter-spacing:.04em;padding:8px 12px;border-radius:10px;cursor:pointer}
+.lang-trigger:hover,.lang-trigger[aria-expanded="true"]{background:rgba(255,255,255,.32)}
+.lang-trigger:focus-visible{outline:3px solid rgba(255,255,255,.7);outline-offset:2px}
+.lang-flecha{transition:transform .15s}
+.lang-trigger[aria-expanded="true"] .lang-flecha{transform:rotate(180deg)}
+.lang-menu{position:absolute;right:0;top:calc(100% + 6px);min-width:180px;background:#fff;border:1px solid var(--linea);border-radius:12px;box-shadow:0 12px 32px rgba(15,23,42,.28);padding:6px;z-index:50;display:flex;flex-direction:column;gap:2px}
+.langs .lang-menu button{border:0;background:transparent;color:var(--texto);font-weight:500;font-size:15px;padding:10px 12px;border-radius:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:16px;text-align:left;letter-spacing:0}
+.langs .lang-menu button::after{content:attr(data-code);font-size:12px;font-weight:700;opacity:.55;letter-spacing:.06em}
+.langs .lang-menu button:hover{background:#eaf3fa}
+.langs .lang-menu button[aria-pressed="true"]{background:var(--azul);color:#fff}
+.langs .lang-menu button[aria-pressed="true"]::after{opacity:.8}
 main{max-width:720px;margin:0 auto;padding:16px 16px 40px}
 .card{background:#fff;border:1px solid var(--linea);border-radius:14px;padding:16px;margin-bottom:14px}
 h2{font-size:17px;margin:0 0 10px;color:var(--azul)}
@@ -99,12 +108,19 @@ ul.lista-res li::before{content:"\2715";color:#c0651a}
 <header>
   <div class="top">
     <div class="org" id="org"></div>
-    <div class="langs" role="group" aria-label="Language / Idioma / Langue / Idioma / Sprache">
-      <button type="button" class="lang-btn" data-lang="es" aria-label="Español" aria-pressed="true">ES</button>
-      <button type="button" class="lang-btn" data-lang="en" aria-label="English" aria-pressed="false">EN</button>
-      <button type="button" class="lang-btn" data-lang="fr" aria-label="Français" aria-pressed="false">FR</button>
-      <button type="button" class="lang-btn" data-lang="pt" aria-label="Português" aria-pressed="false">PT</button>
-      <button type="button" class="lang-btn" data-lang="de" aria-label="Deutsch" aria-pressed="false">DE</button>
+    <div class="langs" id="langs">
+      <button type="button" class="lang-trigger" id="langTrigger" aria-haspopup="true" aria-expanded="false" aria-controls="langMenu" aria-label="Language / Idioma / Langue / Idioma / Sprache">
+        <svg class="lang-globo" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 3.9 5.8 3.9 9s-1.3 6.2-3.9 9c-2.6-2.8-3.9-5.8-3.9-9S9.4 5.8 12 3z"/></svg>
+        <span id="langActual">ES</span>
+        <svg class="lang-flecha" viewBox="0 0 12 8" width="11" height="8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 1.5l5 5 5-5"/></svg>
+      </button>
+      <div class="lang-menu hidden" id="langMenu" role="group" aria-label="Language / Idioma / Langue / Idioma / Sprache">
+        <button type="button" class="lang-btn" data-lang="es" data-code="ES" aria-pressed="true">Español</button>
+        <button type="button" class="lang-btn" data-lang="en" data-code="EN" aria-pressed="false">English</button>
+        <button type="button" class="lang-btn" data-lang="fr" data-code="FR" aria-pressed="false">Français</button>
+        <button type="button" class="lang-btn" data-lang="pt" data-code="PT" aria-pressed="false">Português</button>
+        <button type="button" class="lang-btn" data-lang="de" data-code="DE" aria-pressed="false">Deutsch</button>
+      </div>
     </div>
   </div>
   <h1 id="titulo" data-i18n="title.reg">Registro de ingreso al Territorio Ancestral</h1>
@@ -4309,11 +4325,24 @@ function aplicarIdioma(raiz = document){
     sel.value = v;
   });
 }
+function actualizarIdiomaActual(){ const el = $('#langActual'); if (el) el.textContent = String(lang).toUpperCase(); }
+function configurarIdiomas(){
+  const caja = $('#langs'), disparador = $('#langTrigger'), menu = $('#langMenu');
+  const cerrar = () => { menu.classList.add('hidden'); disparador.setAttribute('aria-expanded', 'false'); };
+  disparador.addEventListener('click', () => {
+    const abrir = menu.classList.contains('hidden');
+    menu.classList.toggle('hidden', !abrir);
+    disparador.setAttribute('aria-expanded', abrir ? 'true' : 'false');
+  });
+  document.addEventListener('click', e => { if (!caja.contains(e.target) || e.target.closest('.lang-btn')) cerrar(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.classList.contains('hidden')) { cerrar(); disparador.focus(); } });
+}
 function cambiarIdioma(nuevo){
   if (!IDIOMAS.includes(nuevo)) return;
   lang = nuevo;
   try { localStorage.setItem('idioma', nuevo); } catch (e) {}
   document.documentElement.lang = nuevo;
+  actualizarIdiomaActual();
   $$('.lang-btn').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === nuevo));
   document.title = t('docTitle');
   $('#pie').textContent = CONFIG.resguardo + ' · ' + CONFIG.territorio;
@@ -4340,6 +4369,8 @@ function init(){
   DB.iniciar();
   lang = idiomaInicial();
   document.documentElement.lang = lang;
+  configurarIdiomas();
+  actualizarIdiomaActual();
   $('#org').textContent = CONFIG.organizacion + ' · NIT ' + CONFIG.nit;
   $('#pie').textContent = CONFIG.resguardo + ' · ' + CONFIG.territorio;
   $('#fechaIngreso').value = hoyISO();
