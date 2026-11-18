@@ -68,6 +68,30 @@ table.tabla th{color:var(--muted);font-size:12px;text-transform:uppercase;letter
 .aviso{font-size:13px;color:#7a4a00;background:#fff4e5;border:1px solid #f5d3a1;border-radius:10px;padding:10px 12px;margin:0 0 12px}
 .nota{font-size:13px;color:var(--muted)}
 footer{font-size:12px;color:var(--muted);text-align:center;padding:0 16px 24px}
+
+/* Recomendaciones y restricciones */
+.col-form{min-width:0}
+.regla{display:none;background:#fff;border:1px solid var(--linea);border-top:5px solid var(--verde);border-radius:14px;padding:16px 16px 8px}
+.regla.res{border-top-color:var(--naranja)}
+.regla h2{font-size:16px;margin:0 0 10px}
+.regla ul,.reglas-movil ul{list-style:none;margin:0;padding:0}
+.regla li,.reglas-movil li{position:relative;padding-left:24px;margin:0 0 9px;font-size:14px;line-height:1.4;color:var(--texto)}
+.regla li::before,.reglas-movil li::before{content:"\2713";position:absolute;left:0;top:0;font-weight:800;color:#4a8a22}
+ul.lista-res li::before{content:"\2715";color:#c0651a}
+.reglas-movil{padding:0}
+.reglas-movil summary{cursor:pointer;list-style:none;padding:14px 16px;font-weight:700;color:var(--azul);display:flex;justify-content:space-between;align-items:center;gap:10px;border-left:5px solid var(--verde);border-radius:14px}
+.reglas-movil summary::-webkit-details-marker{display:none}
+.reglas-movil summary::after{content:"\25BE";font-size:16px;transition:transform .15s}
+.reglas-movil[open] summary::after{transform:rotate(180deg)}
+.reglas-movil[open] summary{border-bottom:1px solid var(--linea);border-radius:14px 14px 0 0}
+.reglas-movil .rr-h{margin:12px 16px 8px;font-size:15px}
+.reglas-movil .rr-h-res{color:#b4571a}
+.reglas-movil ul{padding:0 16px 6px}
+@media (min-width:1320px){
+  #vistaRegistro{display:grid;grid-template-columns:250px 688px 250px;gap:22px;align-items:start;margin:0 -283px}
+  .regla{display:block;position:sticky;top:16px}
+  .reglas-movil{display:none}
+}
 @media (max-width:520px){.grid{grid-template-columns:1fr}.tri{grid-template-columns:1fr}}
 </style>
 </head>
@@ -91,10 +115,23 @@ footer{font-size:12px;color:var(--muted);text-align:center;padding:0 16px 24px}
 
   <!-- ============ FORMULARIO ============ -->
   <section id="vistaRegistro">
+    <aside class="regla rec" aria-labelledby="rrTituloRec">
+      <h2 id="rrTituloRec" data-i18n="rr.tit.rec">Recomendaciones</h2>
+      <ul class="lista-rec"></ul>
+    </aside>
+    <div class="col-form">
     <div class="seg" role="group">
       <button type="button" id="btnIndividual" aria-pressed="true" data-i18n="seg.ind">Individual</button>
       <button type="button" id="btnGrupo" aria-pressed="false" data-i18n="seg.grp">Grupo</button>
     </div>
+
+    <details class="card reglas-movil">
+      <summary data-i18n="rr.resumen">Recomendaciones y restricciones del territorio</summary>
+      <h3 class="rr-h rr-h-rec" data-i18n="rr.tit.rec">Recomendaciones</h3>
+      <ul class="lista-rec"></ul>
+      <h3 class="rr-h rr-h-res" data-i18n="rr.tit.res">Restricciones</h3>
+      <ul class="lista-res"></ul>
+    </details>
 
     <div class="card">
       <h2 data-i18n="sec.datos">Datos del ingreso</h2>
@@ -125,6 +162,11 @@ footer{font-size:12px;color:var(--muted);text-align:center;padding:0 16px 24px}
 
     <div id="msg" class="msg" role="alert"></div>
     <button type="button" id="btnGenerar" class="btn" data-i18n="btn.enviar">Enviar registro</button>
+    </div>
+    <aside class="regla res" aria-labelledby="rrTituloRes">
+      <h2 id="rrTituloRes" data-i18n="rr.tit.res">Restricciones</h2>
+      <ul class="lista-res"></ul>
+    </aside>
   </section>
 
   <!-- ============ ACUSE DE RECIBO ============ -->
@@ -2498,6 +2540,24 @@ const T = {
     'title.const': 'Constancia de registro',
     'title.verif': 'Verificación de constancia',
     'seg.ind': 'Individual', 'seg.grp': 'Grupo',
+    'rr.tit.rec': 'Recomendaciones', 'rr.tit.res': 'Restricciones', 'rr.resumen': 'Recomendaciones y restricciones del territorio',
+    'rr.r1': 'Usar ropa y calzado cómodo e impermeable y demás elementos para cubrirse del frío, como guantes, bufanda, gorro y/o capa.',
+    'rr.r2': 'Llevar snacks, frutas y agua para consumir durante el recorrido.',
+    'rr.r3': 'Usar tapabocas en los lugares recomendados.',
+    'rr.r4': 'Usar protector solar.',
+    'rr.r5': 'Llegar en los horarios descritos para poder realizar la ruta sin contratiempos.',
+    'rr.r6': 'Portar documentos de identidad.',
+    'rr.r7': 'Llevar los medicamentos requeridos bajo fórmula médica.',
+    'rr.r8': 'Procurar guardar silencio en cada uno de los sitios turísticos.',
+    'rr.x1': 'Prohibido el ingreso de mascotas a los sitios turísticos.',
+    'rr.x2': 'Prohibido el ingreso de vehículos, motos y bicicletas a los senderos turísticos.',
+    'rr.x3': 'Prohibido el ingreso de personas bajo los efectos del alcohol y sustancias psicoactivas a los sitios turísticos.',
+    'rr.x4': 'Prohibido el ingreso, expendio y consumo de bebidas alcohólicas y sustancias psicoactivas en los sitios turísticos.',
+    'rr.x5': 'Prohibida la extracción de flora y fauna.',
+    'rr.x6': 'Prohibido el ingreso de armas de fuego y armas cortopunzantes.',
+    'rr.x7': 'Prohibido salirse de los caminos demarcados y autorizados por los guías/informadores turísticos.',
+    'rr.x8': 'No botar basura.',
+    'rr.x9': 'Prohibido el turismo sexual.',
     'sec.datos': 'Datos del ingreso', 'f.fecha': 'Fecha de ingreso *', 'f.actividad': 'Actividad o sitio a visitar', 'f.actividadPh': 'Ej.: Termales de San Juan',
     'sec.lider': 'Persona responsable del grupo', 'f.liderNombre': 'Nombre *', 'f.liderTel': 'Teléfono *',
     'btn.agregar': '+ Agregar integrante', 'sec.acta': 'Acta de corresponsabilidad',
@@ -2545,6 +2605,24 @@ const T = {
     'title.const': 'Registration certificate',
     'title.verif': 'Certificate verification',
     'seg.ind': 'Individual', 'seg.grp': 'Group',
+    'rr.tit.rec': 'Recommendations', 'rr.tit.res': 'Restrictions', 'rr.resumen': 'Recommendations and restrictions',
+    'rr.r1': 'Wear comfortable, waterproof clothing and footwear, plus warm gear such as gloves, scarf, hat and/or cape.',
+    'rr.r2': 'Bring snacks, fruit and water for the walk.',
+    'rr.r3': 'Wear a face mask in the places where it is recommended.',
+    'rr.r4': 'Use sunscreen.',
+    'rr.r5': 'Arrive at the stated times so the route can be completed without setbacks.',
+    'rr.r6': 'Carry your identity documents.',
+    'rr.r7': 'Bring any medication you need, with a medical prescription.',
+    'rr.r8': 'Try to keep quiet at every tourist site.',
+    'rr.x1': 'Pets are not allowed at tourist sites.',
+    'rr.x2': 'Vehicles, motorbikes and bicycles are not allowed on tourist trails.',
+    'rr.x3': 'People under the influence of alcohol or psychoactive substances may not enter tourist sites.',
+    'rr.x4': 'Bringing in, selling or consuming alcoholic beverages and psychoactive substances at tourist sites is prohibited.',
+    'rr.x5': 'Removing flora and fauna is prohibited.',
+    'rr.x6': 'Firearms and bladed weapons are not allowed.',
+    'rr.x7': 'Leaving the marked trails authorized by the tourist guides is prohibited.',
+    'rr.x8': 'Do not litter.',
+    'rr.x9': 'Sex tourism is prohibited.',
     'sec.datos': 'Entry details', 'f.fecha': 'Date of entry *', 'f.actividad': 'Activity or place to visit', 'f.actividadPh': 'E.g.: San Juan Hot Springs',
     'sec.lider': 'Person in charge of the group', 'f.liderNombre': 'Name *', 'f.liderTel': 'Phone *',
     'btn.agregar': '+ Add member', 'sec.acta': 'Accountability agreement',
@@ -2592,6 +2670,24 @@ const T = {
     'title.const': 'Attestation d\'enregistrement',
     'title.verif': 'Vérification de l\'attestation',
     'seg.ind': 'Individuel', 'seg.grp': 'Groupe',
+    'rr.tit.rec': 'Recommandations', 'rr.tit.res': 'Interdictions', 'rr.resumen': 'Recommandations et interdictions',
+    'rr.r1': 'Porter des vêtements et des chaussures confortables et imperméables, ainsi que de quoi se protéger du froid : gants, écharpe, bonnet et/ou cape.',
+    'rr.r2': 'Emporter des en-cas, des fruits et de l\'eau pour le parcours.',
+    'rr.r3': 'Porter un masque dans les lieux où il est recommandé.',
+    'rr.r4': 'Utiliser de la crème solaire.',
+    'rr.r5': 'Arriver aux horaires indiqués pour pouvoir faire le parcours sans contretemps.',
+    'rr.r6': 'Avoir sur soi ses pièces d\'identité.',
+    'rr.r7': 'Emporter les médicaments nécessaires, sur ordonnance.',
+    'rr.r8': 'S\'efforcer de garder le silence sur chacun des sites touristiques.',
+    'rr.x1': 'Les animaux de compagnie sont interdits sur les sites touristiques.',
+    'rr.x2': 'Les véhicules, motos et vélos sont interdits sur les sentiers touristiques.',
+    'rr.x3': 'L\'accès aux sites touristiques est interdit aux personnes sous l\'effet de l\'alcool ou de substances psychoactives.',
+    'rr.x4': 'Il est interdit d\'introduire, de vendre et de consommer des boissons alcoolisées et des substances psychoactives sur les sites touristiques.',
+    'rr.x5': 'Il est interdit de prélever de la flore et de la faune.',
+    'rr.x6': 'Les armes à feu et les armes blanches sont interdites.',
+    'rr.x7': 'Il est interdit de quitter les chemins balisés et autorisés par les guides touristiques.',
+    'rr.x8': 'Ne pas jeter de déchets.',
+    'rr.x9': 'Le tourisme sexuel est interdit.',
     'sec.datos': 'Détails de l\'entrée', 'f.fecha': 'Date d\'entrée *', 'f.actividad': 'Activité ou lieu à visiter', 'f.actividadPh': 'Ex. : Sources thermales de San Juan',
     'sec.lider': 'Responsable du groupe', 'f.liderNombre': 'Nom *', 'f.liderTel': 'Téléphone *',
     'btn.agregar': '+ Ajouter un membre', 'sec.acta': 'Acte de responsabilité',
@@ -2639,6 +2735,24 @@ const T = {
     'title.const': 'Declaração de registo',
     'title.verif': 'Verificação da declaração',
     'seg.ind': 'Individual', 'seg.grp': 'Grupo',
+    'rr.tit.rec': 'Recomendações', 'rr.tit.res': 'Proibições', 'rr.resumen': 'Recomendações e proibições',
+    'rr.r1': 'Usar roupa e calçado confortáveis e impermeáveis, além de itens para o frio, como luvas, cachecol, gorro e/ou capa.',
+    'rr.r2': 'Levar lanches, frutas e água para consumir durante o percurso.',
+    'rr.r3': 'Usar máscara nos locais recomendados.',
+    'rr.r4': 'Usar protetor solar.',
+    'rr.r5': 'Chegar nos horários indicados para fazer a rota sem contratempos.',
+    'rr.r6': 'Portar documento de identidade.',
+    'rr.r7': 'Levar os medicamentos necessários, com receita médica.',
+    'rr.r8': 'Procurar manter silêncio em cada um dos locais turísticos.',
+    'rr.x1': 'É proibida a entrada de animais de estimação nos locais turísticos.',
+    'rr.x2': 'É proibida a entrada de veículos, motos e bicicletas nas trilhas turísticas.',
+    'rr.x3': 'É proibida a entrada de pessoas sob o efeito de álcool ou substâncias psicoativas nos locais turísticos.',
+    'rr.x4': 'É proibido entrar com, vender e consumir bebidas alcoólicas e substâncias psicoativas nos locais turísticos.',
+    'rr.x5': 'É proibida a extração de flora e fauna.',
+    'rr.x6': 'É proibida a entrada com armas de fogo e armas brancas.',
+    'rr.x7': 'É proibido sair dos caminhos demarcados e autorizados pelos guias turísticos.',
+    'rr.x8': 'Não jogar lixo.',
+    'rr.x9': 'É proibido o turismo sexual.',
     'sec.datos': 'Dados da entrada', 'f.fecha': 'Data de entrada *', 'f.actividad': 'Atividade ou local a visitar', 'f.actividadPh': 'Ex.: Termas de San Juan',
     'sec.lider': 'Responsável pelo grupo', 'f.liderNombre': 'Nome *', 'f.liderTel': 'Telefone *',
     'btn.agregar': '+ Adicionar integrante', 'sec.acta': 'Termo de responsabilidade',
@@ -2686,6 +2800,24 @@ const T = {
     'title.const': 'Registrierungsbescheinigung',
     'title.verif': 'Prüfung der Bescheinigung',
     'seg.ind': 'Einzeln', 'seg.grp': 'Gruppe',
+    'rr.tit.rec': 'Empfehlungen', 'rr.tit.res': 'Verbote', 'rr.resumen': 'Empfehlungen und Verbote',
+    'rr.r1': 'Bequeme, wasserdichte Kleidung und Schuhe sowie Kälteschutz wie Handschuhe, Schal, Mütze und/oder Regenumhang tragen.',
+    'rr.r2': 'Snacks, Obst und Wasser für den Weg mitnehmen.',
+    'rr.r3': 'An den empfohlenen Orten eine Maske tragen.',
+    'rr.r4': 'Sonnenschutz verwenden.',
+    'rr.r5': 'Zu den angegebenen Zeiten eintreffen, damit die Route ohne Zwischenfälle möglich ist.',
+    'rr.r6': 'Ausweisdokumente mitführen.',
+    'rr.r7': 'Verschreibungspflichtige Medikamente mitnehmen.',
+    'rr.r8': 'An allen touristischen Orten möglichst leise sein.',
+    'rr.x1': 'Haustiere sind an den touristischen Orten verboten.',
+    'rr.x2': 'Fahrzeuge, Motorräder und Fahrräder sind auf den Wanderwegen verboten.',
+    'rr.x3': 'Personen unter Alkohol- oder Drogeneinfluss ist der Zutritt zu den touristischen Orten verboten.',
+    'rr.x4': 'Das Mitbringen, der Verkauf und der Konsum von alkoholischen Getränken und psychoaktiven Substanzen sind an den touristischen Orten verboten.',
+    'rr.x5': 'Das Entnehmen von Pflanzen und Tieren ist verboten.',
+    'rr.x6': 'Feuer- und Stichwaffen sind verboten.',
+    'rr.x7': 'Das Verlassen der markierten, von den Reiseführern genehmigten Wege ist verboten.',
+    'rr.x8': 'Keinen Müll hinterlassen.',
+    'rr.x9': 'Sextourismus ist verboten.',
     'sec.datos': 'Angaben zur Einreise', 'f.fecha': 'Einreisedatum *', 'f.actividad': 'Aktivität oder Ort', 'f.actividadPh': 'Z. B.: Thermalquellen von San Juan',
     'sec.lider': 'Verantwortliche Person der Gruppe', 'f.liderNombre': 'Name *', 'f.liderTel': 'Telefon *',
     'btn.agregar': '+ Teilnehmer hinzufügen', 'sec.acta': 'Verpflichtungserklärung',
@@ -4197,6 +4329,11 @@ function cambiarIdioma(nuevo){
 /* ============================================================
    INICIO
    ============================================================ */
+function construirReglas(){
+  const lista = (pref, n) => Array.from({ length: n }, (_, i) => '<li data-i18n="rr.' + pref + (i + 1) + '"></li>').join('');
+  $$('.lista-rec').forEach(ul => { ul.innerHTML = lista('r', 8); });
+  $$('.lista-res').forEach(ul => { ul.innerHTML = lista('x', 9); });
+}
 function init(){
   // El texto oficial del acta (el mismo que se imprime en el PDF)
   $('#actaOficial').innerHTML = ACTA_PARRAFOS.map(p => `<p>${esc(p)}</p>`).join('');
@@ -4215,6 +4352,7 @@ function init(){
   $('#btnRecibo').onclick = descargarReciboPDF;
   $('#btnRespaldo').onclick = respaldo;
   $('#btnNuevo').onclick = () => { location.replace(location.href.split(/[?#]/)[0]); };
+  construirReglas();
   aplicarIdioma();
   setTipo('individual');
   $$('.lang-btn').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === lang));
