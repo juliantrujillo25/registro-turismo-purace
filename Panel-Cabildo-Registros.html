@@ -4168,9 +4168,10 @@ let calMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 const aviso = (el, tipo, html) => { el.className = (el.id === 'msgImp' || el.id === 'msgLogin') ? 'msg ' + tipo : 'res ' + tipo; el.innerHTML = html; };
 const horaActual = () => new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 const fechaCorta = iso => iso ? new Date(iso).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
-const fechaIng = iso => { if (!iso) return '—'; const [y, m, d] = iso.split('-'); return `${d}/${m}/${y}`; };
+const fechaIng = iso => { if (!iso) return '—'; const mm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso)); return mm ? `${mm[3]}/${mm[2]}/${mm[1]}` : esc(String(iso).slice(0, 40)); };
+const firmaValida = f => typeof f === 'string' && /^data:image\/(png|jpeg);base64,[A-Za-z0-9+\/=]+$/.test(f);
 const DOC_NOMBRE = { CC: 'C.C.', TI: 'T.I.', CE: 'C.E.', PA: 'Pasaporte', CI: 'CI', DNI: 'DNI' };
-const csvCelda = v => { const s = v == null ? '' : String(v); return /[";\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+const csvCelda = v => { let s = v == null ? '' : String(v); if (/^[=+\-@\t\r]/.test(s) && !/^[+-]?[\d\s().\-]+$/.test(s)) s = "'" + s; return /[";\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
 const csvTexto = filas => '﻿' + filas.map(f => f.map(csvCelda).join(';')).join('\r\n');
 
 /* ---------- Lista y resumen ---------- */
@@ -4239,7 +4240,7 @@ function pintarDetalle(){
         <td>${esc(DOC_NOMBRE[p.docTipo] || p.docTipo)} ${esc(p.docNumero)}</td><td>${esc(p.edad)}</td>
         <td>${esc(p.telefono)}</td><td>${esc(p.emNombre)}<br>${esc(p.emTelefono)}</td>
         <td>${esc(p.salud) || '—'}</td>
-        <td>${p.firma ? `<img class="firma-img" src="${p.firma}" alt="Firma">` : '—'}</td></tr>`).join('')}
+        <td>${firmaValida(p.firma) ? `<img class="firma-img" src="${esc(p.firma)}" alt="Firma">` : (p.firma ? 'Firma no válida' : '—')}</td></tr>`).join('')}
       </tbody></table></div>
 
     <div class="bloque">
