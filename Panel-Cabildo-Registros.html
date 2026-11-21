@@ -3819,8 +3819,8 @@ function tablaPDF(ctx, x, anchos, filas, size){
 // Encabezado común: logos a la izquierda, datos institucionales a la derecha y una línea gruesa
 function encabezadoPDF(pg, y, lineasDerecha){
   const L = 50, R = PW - 50;
-  pg.imagen('Cabildo', L, y - 2, 52, 52);
-  pg.imagen('Turismo', L + 60, y + 4, 118, 42.6);
+  pg.imagen('Cabildo', L, y - 3, 54, 54);
+  pg.imagen('Turismo', L + 64, y + 4, 118, 42.6);
   lineasDerecha.forEach((l, i) => pg.texto(l.t, R, y + 12 + i * 13.5, l.s, { bold: l.bold, color: l.bold ? PDF_TEXTO : PDF_GRIS, align: 'right' }));
   y += 56;
   pg.rect(L, y, R - L, 1.8, { fill: PDF_TEXTO });
@@ -3930,7 +3930,7 @@ async function selloColorParaPDF(px){
 }
 async function logosParaPDF(){
   return {
-    Cabildo: await selloAzulParaPDF(260),
+    Cabildo: await selloColorParaPDF(300),
     Turismo: await imagenJpegPDF(LOGO_PURACE_COLOR, 400, 144),
   };
 }
