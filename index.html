@@ -3115,6 +3115,7 @@ Object.assign(T.es, {
   'sent.copia': 'Descargar acta de corresponsabilidad (PDF)',
   'sent.nuevo': 'Registrar otra persona',
   'sent.error': 'No se pudo enviar el registro: {e}. Sus datos siguen en pantalla; intente de nuevo.',
+  'sent.limite': 'Se recibieron demasiados envíos desde su conexión en poco tiempo. Espere unos minutos e intente de nuevo; sus datos siguen en pantalla.',
   'sent.respaldo': 'Enviar por WhatsApp como respaldo',
   'sent.modoPrueba': 'Modo de prueba: el registro se guarda solo en este navegador.'
 });
@@ -3129,6 +3130,7 @@ Object.assign(T.en, {
   'sent.copia': 'Download the liability form (PDF)',
   'sent.nuevo': 'Register another person',
   'sent.error': 'The registration could not be sent: {e}. Your data is still on screen; please try again.',
+  'sent.limite': 'Too many submissions were received from your connection in a short time. Please wait a few minutes and try again; your data is still on screen.',
   'sent.respaldo': 'Send by WhatsApp as backup',
   'sent.modoPrueba': 'Test mode: the registration is stored only in this browser.'
 });
@@ -3143,6 +3145,7 @@ Object.assign(T.fr, {
   'sent.copia': 'Télécharger le formulaire de responsabilité (PDF)',
   'sent.nuevo': 'Enregistrer une autre personne',
   'sent.error': 'L\'inscription n\'a pas pu être envoyée : {e}. Vos données sont toujours à l\'écran ; réessayez.',
+  'sent.limite': 'Trop d’envois ont été reçus depuis votre connexion en peu de temps. Veuillez patienter quelques minutes et réessayer ; vos données restent à l’écran.',
   'sent.respaldo': 'Envoyer par WhatsApp en secours',
   'sent.modoPrueba': 'Mode test : l\'inscription est enregistrée uniquement dans ce navigateur.'
 });
@@ -3157,6 +3160,7 @@ Object.assign(T.pt, {
   'sent.copia': 'Descarregar termo de responsabilidade (PDF)',
   'sent.nuevo': 'Registar outra pessoa',
   'sent.error': 'Não foi possível enviar o registo: {e}. Os seus dados continuam no ecrã; tente novamente.',
+  'sent.limite': 'Foram recebidos demasiados envios a partir da sua ligação em pouco tempo. Aguarde alguns minutos e tente novamente; os seus dados continuam no ecrã.',
   'sent.respaldo': 'Enviar por WhatsApp como apoio',
   'sent.modoPrueba': 'Modo de teste: o registo fica guardado apenas neste navegador.'
 });
@@ -3171,6 +3175,7 @@ Object.assign(T.de, {
   'sent.copia': 'Haftungserklärung herunterladen (PDF)',
   'sent.nuevo': 'Eine weitere Person registrieren',
   'sent.error': 'Die Registrierung konnte nicht gesendet werden: {e}. Ihre Daten sind noch auf dem Bildschirm; bitte erneut versuchen.',
+  'sent.limite': 'Von Ihrer Verbindung wurden in kurzer Zeit zu viele Übermittlungen empfangen. Bitte warten Sie einige Minuten und versuchen Sie es erneut; Ihre Daten bleiben auf dem Bildschirm.',
   'sent.respaldo': 'Per WhatsApp als Sicherung senden',
   'sent.modoPrueba': 'Testmodus: Die Registrierung wird nur in diesem Browser gespeichert.'
 });
@@ -4264,7 +4269,7 @@ async function enviar(){
     ultimo = { core, fila };
     mostrarEnviado();
   } catch (e) {
-    mostrarMsg('#msg', 'err', t('sent.error', { e: e.message }));
+    mostrarMsg('#msg', 'err', /limite_envios/.test(String(e && e.message)) ? t('sent.limite') : t('sent.error', { e: e.message }));
     $('#btnRespaldo').classList.remove('hidden');
   } finally {
     btn.disabled = false; btn.textContent = t('btn.enviar');
